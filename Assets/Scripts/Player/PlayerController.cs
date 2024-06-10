@@ -7,7 +7,7 @@ using UnityEngine.InputSystem;
 using UnityEngine.Windows;
 using static Unity.Collections.AllocatorManager;
 
-public class PlayerController : MonoBehaviour
+public class PlayerController : MonoBehaviour, ICombat.IAttack, ICombat.IDamage
 {
     [SerializeField] float speed = 4.0f;
     [SerializeField] float jumpForce = 7.5f;
@@ -253,5 +253,13 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    public void Attack(ICombat.IDamage target)
+    {
+        throw new NotImplementedException();
+    }
 
+    public void TakeDamage(int damage)
+    {
+        throw new NotImplementedException();
+    }
 }
