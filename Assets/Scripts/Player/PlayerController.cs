@@ -3,11 +3,12 @@ using System.Collections;
 using UnityEngine;
 
 // PlayerController 클래스는 플레이어 캐릭터의 동작을 제어합니다.
-public class PlayerController : MonoBehaviour, ICombat.IAttack, ICombat.IDamage
+[RequireComponent(typeof(PlayerInputHandler))]
+public class PlayerController : MonoBehaviour, ICombat.IAttack, ICombat.IDamage, ICombat.IHealth
 {
-    [SerializeField] float speed = 4.0f;             // 이동 속도
-    [SerializeField] float jumpForce = 7.5f;         // 점프 힘
-    [SerializeField] float rollForce = 6.0f;         // 구르기 힘
+    [SerializeField] private float speed = 4.0f;             // 이동 속도
+    [SerializeField] private float jumpForce = 7.5f;         // 점프 힘
+    [SerializeField] private float rollForce = 6.0f;         // 구르기 힘
 
     private Animator animator;                      // 애니메이터
     private Rigidbody2D rigid;                      // 리지드바디
@@ -20,11 +21,49 @@ public class PlayerController : MonoBehaviour, ICombat.IAttack, ICombat.IDamage
     private float attackDelay = 0.25f;              // 공격 대기 시간
     private float delayToIdle = 0.05f;              // 대기 상태로 전환 대기 시간
     private float rollDuration = 0.25f;             // 구르기 지속 시간
-    private float rollCurrentTime;
 
     private Vector2 inputDirection = Vector2.zero;  // 입력 방향
+    public static float defaultGravityScale = -15.0f;               //기본 중력 값
+    [SerializeField] private float curGravityScale = -15.0f;          //중력값 확인용
+    public bool isFirstCheck = false;
+    [SerializeField] private float pushX = 1.5f;
+
+    // 이동제한 및 움직임 스테이트
+    private Enums.ActiveState state = Enums.ActiveState.None;
+    public Enums.ActiveState State
+    {
+        get => state;
+        set
+        {
+            if(state != value)
+            {
+                state = value;
+                switch(value)
+                {
+                    case Enums.ActiveState.None:
+                        rigid.gravityScale = defaultGravityScale;
+                        break;
+                    case Enums.ActiveState.Active:
+                        rigid.gravityScale = defaultGravityScale;
+                        break;
+                    case Enums.ActiveState.NoGravity:
+                        rigid.gravityScale = 0;
+                        break;
+                }
+            }
+        }
+    }
+
+    //HP관련
+    [SerializeField] private int maxHealth = 100;
+    [SerializeField] private int currentHealth;
+
+    public int CurrentHealth => currentHealth;
+    public int MaxHealth => maxHealth;
 
     // 애니메이터용 해시값들
+    #region AnimatorHashs & Components------------___------
+
     readonly int Jump_Hash = Animator.StringToHash("Jump");
     readonly int AirSpeedY_Hash = Animator.StringToHash("AirSpeedY");
     readonly int IsGround_Hash = Animator.StringToHash("Grounded");
@@ -36,9 +75,13 @@ public class PlayerController : MonoBehaviour, ICombat.IAttack, ICombat.IDamage
     private Sensor_HeroKnight groundSensor;         // 지면 감지 센서
     private SpriteRenderer spriteRenderer;          // 스프라이트 렌더러
     private PlayerInputHandler inputHandler;        // 플레이어 입력 핸들러
+    #endregion
 
     private void Awake()
     {
+        //체력 초기화
+        currentHealth = maxHealth;
+
         spriteRenderer = GetComponent<SpriteRenderer>();
         inputHandler = GetComponent<PlayerInputHandler>();
     }
@@ -159,6 +202,8 @@ public class PlayerController : MonoBehaviour, ICombat.IAttack, ICombat.IDamage
     // 업데이트
     private void Update()
     {
+        curGravityScale = rigid.gravityScale;
+
         inputDirection = inputHandler.InputDirection;
         if (!grounded && groundSensor.State())
         {
@@ -208,13 +253,28 @@ public class PlayerController : MonoBehaviour, ICombat.IAttack, ICombat.IDamage
     public void Attack(ICombat.IDamage target)
     {
         // 공격 로직 구현
-        throw new NotImplementedException();
+        //target.TakeDamage(attackDamage);
     }
 
     // 피해 받기 함수
     public void TakeDamage(int damage)
     {
         // 피해 로직 구현
+        currentHealth -= damage;
+    }
+
+    public void Die()
+    {
         throw new NotImplementedException();
     }
+
+#if UNITY_EDITOR
+
+    public void Test_JumpForce(float force)
+    {
+        //공중 공격 시 공중에 머무를려면 3이 적당함
+        rigid.velocity = new Vector2(rigid.velocity.x, force);
+    }
+
+#endif
 }

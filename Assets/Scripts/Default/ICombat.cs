@@ -13,4 +13,10 @@ public class ICombat
     {
         void TakeDamage(int damage);
     }
+    public interface IHealth
+    {
+        int CurrentHealth { get; }
+        int MaxHealth { get; }
+        void Die();
+    }
 }
