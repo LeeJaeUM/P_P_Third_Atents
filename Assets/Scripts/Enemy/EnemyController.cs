@@ -95,13 +95,13 @@ public class EnemyController : CharacterBase
     // 공격 관련 --------------------------------------------------------------------------------------------
 
     [Header("Attack")]
-    [SerializeField] private int currentAttack = 0; // 현재 공격 단계
-    private float timeSinceAttack = 0.0f;           // 마지막 공격 이후 경과 시간
-    [SerializeField]
-    private float attackDelay = 1.5f;              // 공격 대기 시간
-    private float attackForce = 2.0f;               // 공격 시 앞으로 나갈 거리
-    public float attackDistance = 3.0f;                // 공격 가능 거리
+    [SerializeField] private int currentAttack = 0;         // 현재 공격 단계
+    private float timeSinceAttack = 0.0f;                   // 마지막 공격 이후 경과 시간
+    [SerializeField] private float attackDelay = 1.5f;      // 공격 대기 시간
+    [SerializeField] private float attackForce = 2.0f;      // 공격 시 앞으로 나갈 거리
+    public float attackDistance = 3.0f;                     // 공격 가능 거리
     public Action onAttack;
+    public Action onExitAttackState;
 
     // 탐색 관련 -------------------------------------------------------------------------------------------
     [Header("Find")]
@@ -234,13 +234,8 @@ public class EnemyController : CharacterBase
         {
             State = BehaviorState.Patrol;   // 일정 시간이 지날때까지 플레이어를 못찾음 -> 배회 상태로 변경
         }
-        else if (FindPlayer())
-        {
-            State = BehaviorState.Chase;    // 플레이어 찾았다 -> 추적
-        }
     }
 
-    public float testDistanceSq = 0;
     public float testATKDisSq = 0;
 
     void Update_Attack()
@@ -248,17 +243,9 @@ public class EnemyController : CharacterBase
         //공격 딜레이용 시간변수
         timeSinceAttack += Time.deltaTime;
 
-        // 플레이어와의 거리의 제곱 계산
-        float distanceSquared = (transform.position - player.transform.position).sqrMagnitude;
 
-        // 공격 범위의 제곱 계산
-        float attackDistanceSquared = attackDistance * attackDistance;
-
-        testDistanceSq = distanceSquared;
-        testATKDisSq = attackDistanceSquared;
-
-        // 플레이어와의 거리가 공격 범위보다 큰지 확인
-        if (distanceSquared >= attackDistanceSquared)
+        // 플레이어와의 x축 거리 계산
+        if (Mathf.Abs(transform.position.x - player.transform.position.x) >= 4f)
         {
             State = BehaviorState.Chase;
         }
@@ -270,6 +257,7 @@ public class EnemyController : CharacterBase
                 AttackTry();
             }
         }
+        testATKDisSq = Mathf.Abs(transform.position.x - player.transform.position.x);
     }
 
     void Update_Dead()
@@ -316,8 +304,10 @@ public class EnemyController : CharacterBase
         switch (oldState)
         {
             case BehaviorState.Find:
+                findTimeElapsed = 0;    //다시 Find로 돌아가을때를 위해 탐색시간 초기화
                 break;
             case BehaviorState.Attack:
+                onExitAttackState?.Invoke();
                 break;
             case BehaviorState.Dead:
                 gameObject.SetActive(true);

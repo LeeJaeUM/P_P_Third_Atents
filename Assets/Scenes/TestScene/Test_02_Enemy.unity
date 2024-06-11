@@ -169,9 +169,12 @@ MonoBehaviour:
   stoppingDistance: 1.8
   currentAttack: 0
   attackDelay: 1.5
-  attackRange: 3
+  attackForce: 0.1
+  attackDistance: 3
   findTime: 5
   player: {fileID: 0}
+  testDistanceSq: 0
+  testATKDisSq: 0
 --- !u!61 &40301986
 BoxCollider2D:
   m_ObjectHideFlags: 0

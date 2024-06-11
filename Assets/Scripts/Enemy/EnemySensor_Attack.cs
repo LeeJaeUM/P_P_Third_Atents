@@ -16,6 +16,13 @@ public class EnemySensor_Attack : EnemySensorBase
             StartCoroutine(ColliderOnOff());
         };
 
+        enemy.onExitAttackState += () =>
+        {
+            // Attack state에서 벗어나면 다시 탐색용으로 초기화
+            isFindPlayer = false;
+            rangeCollider.enabled = true;
+        };
+
         rangeCollider.enabled = true;
     }
 
