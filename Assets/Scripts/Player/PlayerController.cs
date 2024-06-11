@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using UnityEngine;
+using static ICombat;
 
 // PlayerController 클래스는 플레이어 캐릭터의 동작을 제어합니다.
 [RequireComponent(typeof(PlayerInputHandler))]
@@ -14,6 +15,7 @@ public class PlayerController : CharacterBase
     [SerializeField] private bool isRolling = false; // 구르는 중인지 여부
 
     private int facingDirection = 1;                // 캐릭터가 바라보는 방향
+    public int FacingDirection => facingDirection;
     [SerializeField] private int currentAttack = 0; // 현재 공격 단계
     private float timeSinceAttack = 0.0f;           // 마지막 공격 이후 경과 시간
     private float attackDelay = 0.25f;              // 공격 대기 시간
@@ -22,7 +24,7 @@ public class PlayerController : CharacterBase
     //private float delayToIdle = 0.05f;              // 대기 상태로 전환 대기 시간
     private float rollDuration = 0.25f;             // 구르기 지속 시간
     [SerializeField] private float rollDelay = 1.0f;
-    [SerializeField] private float timeSinceRoll = 0.0f;
+    private float timeSinceRoll = 0.0f;             // 구르기 가능 시간 판단 변수
 
     private Vector2 inputDirection = Vector2.zero;  // 입력 방향
     public static float defaultGravityScale = 1f;               //기본 중력 값
@@ -58,6 +60,7 @@ public class PlayerController : CharacterBase
         }
     }
 
+    public Action onAttack;
 
     // 애니메이터용 해시값들
     #region AnimatorHashs & Components------------___------
@@ -151,6 +154,9 @@ public class PlayerController : CharacterBase
                 currentAttack = 1;
             animator.SetTrigger("Attack" + currentAttack);
             timeSinceAttack = 0.0f;
+
+            //공격 눌렀다고 알림
+            onAttack?.Invoke();
 
             StartCoroutine(Attacking_Physics());
         }

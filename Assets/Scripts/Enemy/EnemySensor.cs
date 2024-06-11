@@ -5,15 +5,14 @@ using UnityEngine;
 
 public class EnemySensor : MonoBehaviour
 {
-
-    //public Action<GameObject> onSensorTriggered;
     public Action onSensorTriggered;
 
-    private void OnTriggerEnter(Collider other)
+    private void OnTriggerEnter2D(Collider2D collision)
     {
-        if (other.CompareTag("Player"))
+        if (collision.CompareTag("Player"))
         {
-           // onSensorTriggered?.Invoke(other.gameObject);
+            onSensorTriggered?.Invoke();
         }
     }
+
 }

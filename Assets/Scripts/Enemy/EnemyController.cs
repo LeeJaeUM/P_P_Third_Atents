@@ -11,11 +11,13 @@ public class EnemyController : CharacterBase
     override public float CurrentHealth 
     {
         get => currentHealth;
-        set
+        protected set
         {
-            currentHealth = value;
+            // 최소값은 0, 최대값은 maxHealth로 제한
+            currentHealth = Mathf.Clamp(value, 0, maxHealth);
+
             if (currentHealth <= 0)
-            {
+            { 
                 State = BehaviorState.Dead; // HP가 0이하면 사망
             }
         }
@@ -112,7 +114,7 @@ public class EnemyController : CharacterBase
     /// <summary>
     /// 추적 대상
     /// </summary>
-    Transform chaseTarget = null;
+    [SerializeField] Transform chaseTarget = null;
 
     //컴포넌트
     private EnemySensor enemySensor = null;
@@ -122,6 +124,8 @@ public class EnemyController : CharacterBase
 
     private void Awake()
     {
+        enemySensor = transform.GetChild(0).GetComponent<EnemySensor>();
+        enemySensor.onSensorTriggered += () => State = BehaviorState.Chase;
 
         //AttackSensor attackSensor = child.GetComponent<AttackSensor>();
         //attackSensor.onSensorTriggered += (target) =>
@@ -138,8 +142,8 @@ public class EnemyController : CharacterBase
     private void Start()
     {
         State = BehaviorState.Patrol;
-        enemySensor = transform.GetChild(0).GetComponent<EnemySensor>();
-        enemySensor.onSensorTriggered += () => State = BehaviorState.Chase;
+
+        chaseTarget = GameManager.Instance.Player.transform;
     }
 
     private void OnEnable()
