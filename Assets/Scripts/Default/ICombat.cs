@@ -11,11 +11,11 @@ public class ICombat
 
     public interface IDamage
     {
-        void TakeDamage(int damage);
+        void TakeDamage(float damage);
     }
     public interface IHealth
     {
-        int CurrentHealth { get; }
+        float CurrentHealth { get; }
         int MaxHealth { get; }
         void Die();
     }

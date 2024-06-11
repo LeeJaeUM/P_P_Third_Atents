@@ -3,32 +3,18 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Enemy : MonoBehaviour, ICombat.IAttack, ICombat.IDamage
+public class EnemyController : CharacterBase
 {
-    // HP관련 ------------------------------------------------------------------------------------------
-
     /// <summary>
-    /// 현재 HP
+    /// HP 설정 및 확인용 프로퍼티 오버라이드함
     /// </summary>
-    [SerializeField]    // 테스트용
-    float hp = 30.0f;
-
-    /// <summary>
-    /// 최대 HP
-    /// </summary>
-    [SerializeField]    // 성능을 추구한다면 비권장. 객체지향적으로는 더 올바름
-    float maxHP = 30.0f;
-
-    /// <summary>
-    /// HP 설정 및 확인용 프로퍼티
-    /// </summary>
-    public float HP
+    override public float CurrentHealth 
     {
-        get => hp;
+        get => currentHealth;
         set
         {
-            hp = value;
-            if (hp <= 0)
+            currentHealth = value;
+            if (currentHealth <= 0)
             {
                 State = BehaviorState.Dead; // HP가 0이하면 사망
             }
@@ -38,7 +24,7 @@ public class Enemy : MonoBehaviour, ICombat.IAttack, ICombat.IDamage
     /// <summary>
     /// 사망시 실행될 델리게이트
     /// </summary>
-    public Action<Enemy> onDie;
+    public Action<EnemyController> onDie;
 
     // 상태 관련 ------------------------------------------------------------------------------------------
     public enum BehaviorState : byte
@@ -53,7 +39,7 @@ public class Enemy : MonoBehaviour, ICombat.IAttack, ICombat.IDamage
     /// <summary>
     /// 적의 현재 상태
     /// </summary>
-    BehaviorState state = BehaviorState.Dead;
+    [SerializeField] private BehaviorState state = BehaviorState.Dead;
 
     /// <summary>
     /// 적의 상태 확인 및 설정용 프로퍼티
@@ -97,11 +83,6 @@ public class Enemy : MonoBehaviour, ICombat.IAttack, ICombat.IDamage
     PlayerController attackTarget = null;
 
     /// <summary>
-    /// 공격력
-    /// </summary>
-    public float attackPower = 10.0f;
-
-    /// <summary>
     /// 공격 시간 간격
     /// </summary>
     public float attackInterval = 1.0f;
@@ -128,11 +109,37 @@ public class Enemy : MonoBehaviour, ICombat.IAttack, ICombat.IDamage
     /// </summary>
     float findTimeElapsed = 0.0f;
 
+    /// <summary>
+    /// 추적 대상
+    /// </summary>
+    Transform chaseTarget = null;
+
+    //컴포넌트
+    private EnemySensor enemySensor = null;
+
     // UnityEvent Functions--------------------------------------------------------------------------------------------------------
     #region UnityEvent Functions
 
     private void Awake()
     {
+
+        //AttackSensor attackSensor = child.GetComponent<AttackSensor>();
+        //attackSensor.onSensorTriggered += (target) =>
+        //{
+        //    if (attackTarget == null)    // Attack 상태에서 한번만 실행됨
+        //    {
+        //        attackTarget = target.GetComponent<Player>();
+        //        attackTarget.onDie += ReturnWander;
+        //        State = BehaviorState.Attack;
+        //    }
+        //};
+    }
+
+    private void Start()
+    {
+        State = BehaviorState.Patrol;
+        enemySensor = transform.GetChild(0).GetComponent<EnemySensor>();
+        enemySensor.onSensorTriggered += () => State = BehaviorState.Chase;
     }
 
     private void OnEnable()
@@ -142,13 +149,23 @@ public class Enemy : MonoBehaviour, ICombat.IAttack, ICombat.IDamage
 
     private void OnTriggerEnter(Collider other)
     {
+        if (other.CompareTag("Player"))
+        {
+            chaseTarget = other.transform;
+            //Debug.Log("In : " + chaseTarget);
+        }
 
     }
 
     private void OnTriggerExit(Collider other)
     {
-
+        if (other.CompareTag("Player"))
+        {
+            Debug.Log("Out : " + chaseTarget);
+            //chaseTarget = null;
+        }
     }
+
 
     private void Update()
     {
@@ -161,20 +178,40 @@ public class Enemy : MonoBehaviour, ICombat.IAttack, ICombat.IDamage
 
     void Update_Patrol()
     {
-        //if (!agent.pathPending && agent.remainingDistance <= agent.stoppingDistance)
+        //if (FindPlayer())
         //{
-        //    agent.SetDestination(GetRandomDestination());
+        //    State = BehaviorState.Chase;                    // 플레이어를 찾았으면 Chase 상태로 변경
+        //}
+        //else if (!agent.pathPending && agent.remainingDistance <= agent.stoppingDistance)
+        //{
+        //    agent.SetDestination(GetRandomDestination());   // 목적지에 도착했으면 다시 랜덤 위치로 이동
         //}
     }
 
     void Update_Chase()
     {
-
+        //if (IsPlayerInSight(out Vector3 position))
+        //{
+        //    agent.SetDestination(position); // 마지막 목격 장소를 목적지로 새로 설정
+        //}
+        //else if (!agent.pathPending && agent.remainingDistance <= agent.stoppingDistance)
+        //{
+        //    // 플레이어가 안보이고 마지막 목격지에 도착했다 => 찾기 상태로 전화
+        //    State = BehaviorState.Find;
+        //}
     }
 
     void Update_Find()
     {
-
+        findTimeElapsed += Time.deltaTime;
+        if (findTimeElapsed > findTime)
+        {
+            State = BehaviorState.Patrol;   // 일정 시간이 지날때까지 플레이어를 못찾음 -> 배회 상태로 변경
+        }
+        else if (FindPlayer())
+        {
+            State = BehaviorState.Chase;    // 플레이어 찾았다 -> 추적
+        }
     }
 
     void Update_Attack()
@@ -231,13 +268,35 @@ public class Enemy : MonoBehaviour, ICombat.IAttack, ICombat.IDamage
                 break;
             case BehaviorState.Dead:
                 gameObject.SetActive(true);
-                HP = maxHP;
+                CurrentHealth = MaxHealth;
                 break;
             default:
                 //case BehaviorState.Patrol:    // 사용하지 않음
                 //case BehaviorState.Chase:
                 break;
         }
+
+        /*
+         switch (oldState)
+        {            
+            case BehaviorState.Find:
+                agent.angularSpeed = 120.0f;
+                StopAllCoroutines();
+                break;
+            case BehaviorState.Attack:
+                attackTarget.onDie -= ReturnWander;
+                attackTarget = null;
+                break;
+            case BehaviorState.Dead:
+                gameObject.SetActive(true);
+                HP = maxHP;
+                break;
+            default:
+            //case BehaviorState.Wander:    // 사용하지 않음
+            //case BehaviorState.Chase:
+                break;
+        }
+         */
     }
 
 
@@ -311,18 +370,4 @@ public class Enemy : MonoBehaviour, ICombat.IAttack, ICombat.IDamage
 
     }
 
-
-    /// <summary>
-    /// 플레이어를 공격하는 함수
-    /// </summary>
-    public void Attack(ICombat.IDamage target)
-    {
-        throw new NotImplementedException();
-    }
-
-
-    public void TakeDamage(int damage)
-    {
-        throw new NotImplementedException();
-    }
 }

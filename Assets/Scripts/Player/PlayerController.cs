@@ -4,14 +4,12 @@ using UnityEngine;
 
 // PlayerController 클래스는 플레이어 캐릭터의 동작을 제어합니다.
 [RequireComponent(typeof(PlayerInputHandler))]
-public class PlayerController : MonoBehaviour, ICombat.IAttack, ICombat.IDamage, ICombat.IHealth
+public class PlayerController : CharacterBase
 {
     [SerializeField] private float speed = 4.0f;             // 이동 속도
     [SerializeField] private float jumpForce = 7.5f;         // 점프 힘
     [SerializeField] private float rollForce = 6.0f;         // 구르기 힘
 
-    private Animator animator;                      // 애니메이터
-    private Rigidbody2D rigid;                      // 리지드바디
     [SerializeField] private bool grounded = false; // 땅에 닿아 있는지 여부
     [SerializeField] private bool isRolling = false; // 구르는 중인지 여부
 
@@ -19,6 +17,8 @@ public class PlayerController : MonoBehaviour, ICombat.IAttack, ICombat.IDamage,
     [SerializeField] private int currentAttack = 0; // 현재 공격 단계
     private float timeSinceAttack = 0.0f;           // 마지막 공격 이후 경과 시간
     private float attackDelay = 0.25f;              // 공격 대기 시간
+    private float attackForce = 2.0f;               // 공격 시 앞으로 나갈 거리
+
     //private float delayToIdle = 0.05f;              // 대기 상태로 전환 대기 시간
     private float rollDuration = 0.25f;             // 구르기 지속 시간
     [SerializeField] private float rollDelay = 1.0f;
@@ -28,7 +28,7 @@ public class PlayerController : MonoBehaviour, ICombat.IAttack, ICombat.IDamage,
     public static float defaultGravityScale = 1f;               //기본 중력 값
     [SerializeField] private float curGravityScale = 1f;          //중력값 확인용
     public bool isFirstCheck = false;
-    [SerializeField] private float pushX = 1.5f;
+
 
     // 이동제한 및 움직임 스테이트
     [SerializeField] private Enums.ActiveState state = Enums.ActiveState.None;
@@ -46,7 +46,7 @@ public class PlayerController : MonoBehaviour, ICombat.IAttack, ICombat.IDamage,
                         rigid.gravityScale = defaultGravityScale;
                         break;
                     case Enums.ActiveState.Active:
-                        rigid.velocity = Vector2.zero;
+                        //rigid.velocity = Vector2.zero;
                         rigid.gravityScale = defaultGravityScale;
                         break;
                     case Enums.ActiveState.NoGravity:
@@ -58,12 +58,6 @@ public class PlayerController : MonoBehaviour, ICombat.IAttack, ICombat.IDamage,
         }
     }
 
-    //HP관련
-    [SerializeField] private int maxHealth = 100;
-    [SerializeField] private int currentHealth;
-
-    public int CurrentHealth => currentHealth;
-    public int MaxHealth => maxHealth;
 
     // 애니메이터용 해시값들
     #region AnimatorHashs & Components------------___------
@@ -76,7 +70,9 @@ public class PlayerController : MonoBehaviour, ICombat.IAttack, ICombat.IDamage,
     readonly int IdleBlock_Hash = Animator.StringToHash("IdleBlock");
     readonly int AnimState_Hash = Animator.StringToHash("AnimState");
 
-    private Sensor_HeroKnight groundSensor;         // 지면 감지 센서
+    private Animator animator;                      // 애니메이터
+    private Rigidbody2D rigid;                      // 리지드바디
+    private PlayerSensor_Ground groundSensor;         // 지면 감지 센서
     private SpriteRenderer spriteRenderer;          // 스프라이트 렌더러
     private PlayerInputHandler inputHandler;        // 플레이어 입력 핸들러
     #endregion
@@ -155,6 +151,8 @@ public class PlayerController : MonoBehaviour, ICombat.IAttack, ICombat.IDamage,
                 currentAttack = 1;
             animator.SetTrigger("Attack" + currentAttack);
             timeSinceAttack = 0.0f;
+
+            StartCoroutine(Attacking_Physics());
         }
     }
 
@@ -179,11 +177,13 @@ public class PlayerController : MonoBehaviour, ICombat.IAttack, ICombat.IDamage,
 
         if (!isRolling)
         {
+            //오른쪽을 바라볼때 
             if (inputDirection.x > 0)
             {
                 spriteRenderer.flipX = false;
                 facingDirection = 1;
             }
+            // 왼쪽을 바라볼때
             else if (inputDirection.x < 0)
             {
                 spriteRenderer.flipX = true;
@@ -206,7 +206,7 @@ public class PlayerController : MonoBehaviour, ICombat.IAttack, ICombat.IDamage,
     {
         animator = GetComponent<Animator>();
         rigid = GetComponent<Rigidbody2D>();
-        groundSensor = transform.GetChild(0).GetComponent<Sensor_HeroKnight>();
+        groundSensor = transform.GetChild(0).GetComponent<PlayerSensor_Ground>();
     }
 
     // 업데이트
@@ -214,7 +214,9 @@ public class PlayerController : MonoBehaviour, ICombat.IAttack, ICombat.IDamage,
     {
         curGravityScale = rigid.gravityScale;
 
-        inputDirection = inputHandler.InputDirection;
+        //핸들러의 인풋값 받음 // 인풋액션 함수로 이동
+        //inputDirection = inputHandler.InputDirection;
+
         if (!grounded && groundSensor.State())
         {
             grounded = true;
@@ -236,11 +238,24 @@ public class PlayerController : MonoBehaviour, ICombat.IAttack, ICombat.IDamage,
 
     }
 
-    // 물리 업데이트
+    //----------------------------- 물리 업데이트-------------------------------------------------------------------------------------__________________---------------------
     private void FixedUpdate()
     {
-        if (!isRolling)
-            rigid.velocity = new Vector2(inputDirection.x * speed, rigid.velocity.y);
+        switch (state)
+        {
+            case Enums.ActiveState.None:
+                rigid.velocity = new Vector2(inputDirection.x * speed, rigid.velocity.y);
+                break;
+            case Enums.ActiveState.Active:
+                break;
+            case Enums.ActiveState.NoGravity:
+                break;
+            default: // 기본 물리적용
+                rigid.velocity = new Vector2(inputDirection.x * speed, rigid.velocity.y);
+                break;
+        }
+        //if (!isRolling)
+        //    rigid.velocity = new Vector2(inputDirection.x * speed, rigid.velocity.y);
     }
 
     // 구르기 코루틴
@@ -268,23 +283,16 @@ public class PlayerController : MonoBehaviour, ICombat.IAttack, ICombat.IDamage,
         timeSinceRoll = 0;
     }
 
-    // 공격 함수
-    public void Attack(ICombat.IDamage target)
+    /// <summary>
+    /// 공격 시 물리 적용 코루틴 + state 변화
+    /// </summary>
+    /// <returns></returns>
+    IEnumerator Attacking_Physics()
     {
-        // 공격 로직 구현
-        //target.TakeDamage(attackDamage);
-    }
-
-    // 피해 받기 함수
-    public void TakeDamage(int damage)
-    {
-        // 피해 로직 구현
-        currentHealth -= damage;
-    }
-
-    public void Die()
-    {
-        throw new NotImplementedException();
+        State = Enums.ActiveState.Active;
+        rigid.velocity = new Vector2(attackForce * facingDirection, rigid.velocity.y);
+        yield return new WaitForSeconds(attackDelay);
+        State = Enums.ActiveState.None;
     }
 
 #if UNITY_EDITOR
