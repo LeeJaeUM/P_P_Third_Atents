@@ -28,7 +28,7 @@ public class EnemyController : CharacterBase
     /// </summary>
     public Action<EnemyController> onDie;
 
-    // 상태 관련 ------------------------------------------------------------------------------------------
+    // 상태 관련 -----------------------_______________-------------------------------------_______/////_______---------------------____________________------------------------------
     public enum BehaviorState : byte
     {
         Patrol = 0, // 배회상태. 주변을 왔다갔다한다.
@@ -77,6 +77,17 @@ public class EnemyController : CharacterBase
     /// </summary>
     public float runSpeed = 7.0f;
 
+    // Patrol(순찰) 관련
+
+    [SerializeField] private float leftPatrol = 0;
+    [SerializeField] private float rightPatrol = 0;
+
+    public float patrolRange = 3;
+    [SerializeField] private bool isRightPatrol = true;
+
+    private int facingDirection = 1;                // 캐릭터가 바라보는 방향
+    public int FacingDirection => facingDirection;
+
     // 공격 관련 --------------------------------------------------------------------------------------------
 
     /// <summary>
@@ -117,15 +128,21 @@ public class EnemyController : CharacterBase
     [SerializeField] Transform chaseTarget = null;
 
     //컴포넌트
-    private EnemySensor enemySensor = null;
+    private EnemySensor_Search enemySensor = null;
+    private Rigidbody2D rigid;
 
     // UnityEvent Functions--------------------------------------------------------------------------------------------------------
     #region UnityEvent Functions
 
     private void Awake()
     {
-        enemySensor = transform.GetChild(0).GetComponent<EnemySensor>();
+        rigid = GetComponent<Rigidbody2D>();
+
+        enemySensor = transform.GetChild(0).GetComponent<EnemySensor_Search>();
         enemySensor.onSensorTriggered += () => State = BehaviorState.Chase;
+
+        RefreshPatrol();
+
 
         //AttackSensor attackSensor = child.GetComponent<AttackSensor>();
         //attackSensor.onSensorTriggered += (target) =>
@@ -137,6 +154,12 @@ public class EnemyController : CharacterBase
         //        State = BehaviorState.Attack;
         //    }
         //};
+    }
+
+    private void RefreshPatrol()
+    {
+        leftPatrol = transform.position.x - patrolRange;
+        rightPatrol = transform.position.x + patrolRange;
     }
 
     private void Start()
@@ -151,26 +174,6 @@ public class EnemyController : CharacterBase
 
     }
 
-    private void OnTriggerEnter(Collider other)
-    {
-        if (other.CompareTag("Player"))
-        {
-            chaseTarget = other.transform;
-            //Debug.Log("In : " + chaseTarget);
-        }
-
-    }
-
-    private void OnTriggerExit(Collider other)
-    {
-        if (other.CompareTag("Player"))
-        {
-            Debug.Log("Out : " + chaseTarget);
-            //chaseTarget = null;
-        }
-    }
-
-
     private void Update()
     {
         onUpdate();
@@ -182,14 +185,33 @@ public class EnemyController : CharacterBase
 
     void Update_Patrol()
     {
-        //if (FindPlayer())
-        //{
-        //    State = BehaviorState.Chase;                    // 플레이어를 찾았으면 Chase 상태로 변경
-        //}
-        //else if (!agent.pathPending && agent.remainingDistance <= agent.stoppingDistance)
-        //{
-        //    agent.SetDestination(GetRandomDestination());   // 목적지에 도착했으면 다시 랜덤 위치로 이동
-        //}
+        if (isRightPatrol)
+        {
+            if (transform.position.x < rightPatrol)
+            {
+                rigid.velocity = new Vector2(walkSpeed * facingDirection, rigid.velocity.y);
+            }
+            else
+            {
+                facingDirection = -1;
+                isRightPatrol = false;
+            }
+        }
+        else
+        {
+            if (transform.position.x > leftPatrol)
+            {
+                rigid.velocity = new Vector2(walkSpeed * facingDirection, rigid.velocity.y);
+            }
+            else
+            {
+                facingDirection = 1;
+                isRightPatrol = true;
+            }
+        }
+
+        // 목적지에 도착했으면 다시 랜덤 위치로 이동
+
     }
 
     void Update_Chase()

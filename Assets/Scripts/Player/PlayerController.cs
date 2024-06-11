@@ -301,6 +301,14 @@ public class PlayerController : CharacterBase
         State = Enums.ActiveState.None;
     }
 
+    public override void Attack(IDamage target)
+    {
+        base.Attack(target);
+
+        //공격에 성공하면 전진거리의 절반만큼 뒤로 물러남
+        rigid.velocity = new Vector2(attackForce * -facingDirection * 0.5f, rigid.velocity.y);
+    }
+
 #if UNITY_EDITOR
 
     public void Test_JumpForce(float force)

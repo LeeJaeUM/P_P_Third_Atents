@@ -32,7 +32,7 @@ public class CharacterBase : MonoBehaviour, ICombat.IAttack, ICombat.IDamage, IC
     protected float damageMultiplier = 1.0f;
 
     // 공격 함수
-    public void Attack(ICombat.IDamage target)
+    public virtual void Attack(ICombat.IDamage target)
     {
         // 공격 로직 구현
         target.TakeDamage(attackPower * damageMultiplier);
