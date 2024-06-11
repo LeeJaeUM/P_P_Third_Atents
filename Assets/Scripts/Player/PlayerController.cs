@@ -19,17 +19,19 @@ public class PlayerController : MonoBehaviour, ICombat.IAttack, ICombat.IDamage,
     [SerializeField] private int currentAttack = 0; // 현재 공격 단계
     private float timeSinceAttack = 0.0f;           // 마지막 공격 이후 경과 시간
     private float attackDelay = 0.25f;              // 공격 대기 시간
-    private float delayToIdle = 0.05f;              // 대기 상태로 전환 대기 시간
+    //private float delayToIdle = 0.05f;              // 대기 상태로 전환 대기 시간
     private float rollDuration = 0.25f;             // 구르기 지속 시간
+    [SerializeField] private float rollDelay = 1.0f;
+    [SerializeField] private float timeSinceRoll = 0.0f;
 
     private Vector2 inputDirection = Vector2.zero;  // 입력 방향
-    public static float defaultGravityScale = -15.0f;               //기본 중력 값
-    [SerializeField] private float curGravityScale = -15.0f;          //중력값 확인용
+    public static float defaultGravityScale = 1f;               //기본 중력 값
+    [SerializeField] private float curGravityScale = 1f;          //중력값 확인용
     public bool isFirstCheck = false;
     [SerializeField] private float pushX = 1.5f;
 
     // 이동제한 및 움직임 스테이트
-    private Enums.ActiveState state = Enums.ActiveState.None;
+    [SerializeField] private Enums.ActiveState state = Enums.ActiveState.None;
     public Enums.ActiveState State
     {
         get => state;
@@ -44,9 +46,11 @@ public class PlayerController : MonoBehaviour, ICombat.IAttack, ICombat.IDamage,
                         rigid.gravityScale = defaultGravityScale;
                         break;
                     case Enums.ActiveState.Active:
+                        rigid.velocity = Vector2.zero;
                         rigid.gravityScale = defaultGravityScale;
                         break;
                     case Enums.ActiveState.NoGravity:
+                        rigid.velocity = Vector2.zero;
                         rigid.gravityScale = 0;
                         break;
                 }
@@ -108,6 +112,9 @@ public class PlayerController : MonoBehaviour, ICombat.IAttack, ICombat.IDamage,
         inputHandler.OnBlockReleased -= OnBlockCanceled;  // 방패 내리기 이벤트 해제
     }
 
+    #region InputActions
+
+
     // 방패 내리기 이벤트 처리
     private void OnBlockCanceled()
     {
@@ -127,10 +134,11 @@ public class PlayerController : MonoBehaviour, ICombat.IAttack, ICombat.IDamage,
     // 구르기 이벤트 처리
     private void OnRoll()
     {
-        if (!isRolling)
+        if (!isRolling && timeSinceRoll > rollDelay)
         {
             isRolling = true;
             animator.SetTrigger(Roll_Hash);
+            State = Enums.ActiveState.NoGravity;
             StartCoroutine(Rolling());
         }
     }
@@ -191,6 +199,8 @@ public class PlayerController : MonoBehaviour, ICombat.IAttack, ICombat.IDamage,
         animator.SetInteger(AnimState_Hash, 0);
     }
 
+    #endregion
+
     // 시작 초기화
     void Start()
     {
@@ -215,8 +225,15 @@ public class PlayerController : MonoBehaviour, ICombat.IAttack, ICombat.IDamage,
             grounded = false;
             animator.SetBool(IsGround_Hash, grounded);
         }
+        // 점프 시 애니메이션 적용용 float
         animator.SetFloat(AirSpeedY_Hash, rigid.velocity.y);
+        
+        //공격 딜레이용 시간변수
         timeSinceAttack += Time.deltaTime;
+
+        //구르기 딜레이용 시간변수
+        timeSinceRoll += Time.deltaTime;
+
     }
 
     // 물리 업데이트
@@ -247,6 +264,8 @@ public class PlayerController : MonoBehaviour, ICombat.IAttack, ICombat.IDamage,
             spriteRenderer.flipX = true;
             facingDirection = -1;
         }
+        State = Enums.ActiveState.None;
+        timeSinceRoll = 0;
     }
 
     // 공격 함수

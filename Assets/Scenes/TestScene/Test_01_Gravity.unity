@@ -686,7 +686,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   seed: -1
   controller: {fileID: 9117128348151280058}
+  rigidbody2: {fileID: 8942925490599478682}
   testForce: 11
+  testGravity: 0.01
+  testGravityDefault: 1
 --- !u!1 &1849768115
 GameObject:
   m_ObjectHideFlags: 0
@@ -1480,7 +1483,14 @@ MonoBehaviour:
   grounded: 0
   isRolling: 0
   currentAttack: 0
+  rollDelay: 1
+  timeSinceRoll: 0
   curGravityScale: -15
+  isFirstCheck: 0
+  pushX: 1.5
+  state: 0
+  maxHealth: 100
+  currentHealth: 0
 --- !u!114 &9117128348151280059
 MonoBehaviour:
   m_ObjectHideFlags: 0
