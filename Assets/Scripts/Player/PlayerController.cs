@@ -7,6 +7,7 @@ using static ICombat;
 [RequireComponent(typeof(PlayerInputHandler))]
 public class PlayerController : CharacterBase
 {
+    [Header("Move Check")]
     [SerializeField] private float speed = 4.0f;             // 이동 속도
     [SerializeField] private float jumpForce = 7.5f;         // 점프 힘
     [SerializeField] private float rollForce = 6.0f;         // 구르기 힘
@@ -14,18 +15,24 @@ public class PlayerController : CharacterBase
     [SerializeField] private bool grounded = false; // 땅에 닿아 있는지 여부
     [SerializeField] private bool isRolling = false; // 구르는 중인지 여부
 
+    //방향처리-------------
     private int facingDirection = 1;                // 캐릭터가 바라보는 방향
     public int FacingDirection => facingDirection;
+
+    [Header("Attack")]
     [SerializeField] private int currentAttack = 0; // 현재 공격 단계
     private float timeSinceAttack = 0.0f;           // 마지막 공격 이후 경과 시간
     private float attackDelay = 0.25f;              // 공격 대기 시간
     private float attackForce = 2.0f;               // 공격 시 앞으로 나갈 거리
+    public Action onAttack;
 
+    [Header("Roll")]
     //private float delayToIdle = 0.05f;              // 대기 상태로 전환 대기 시간
     private float rollDuration = 0.25f;             // 구르기 지속 시간
     [SerializeField] private float rollDelay = 1.0f;
     private float timeSinceRoll = 0.0f;             // 구르기 가능 시간 판단 변수
 
+    [Header("Gravity")]
     private Vector2 inputDirection = Vector2.zero;  // 입력 방향
     public static float defaultGravityScale = 1f;               //기본 중력 값
     [SerializeField] private float curGravityScale = 1f;          //중력값 확인용
@@ -60,7 +67,6 @@ public class PlayerController : CharacterBase
         }
     }
 
-    public Action onAttack;
 
     // 애니메이터용 해시값들
     #region AnimatorHashs & Components------------___------

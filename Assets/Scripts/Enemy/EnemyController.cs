@@ -75,10 +75,10 @@ public class EnemyController : CharacterBase
     /// <summary>
     /// 이동 속도(추적 및 공격 상태에서 사용)
     /// </summary>
-    public float runSpeed = 7.0f;
+    public float runSpeed = 4.0f;
 
     // Patrol(순찰) 관련
-
+    [Header("Patrol")]
     [SerializeField] private float leftPatrol = 0;
     [SerializeField] private float rightPatrol = 0;
 
@@ -88,30 +88,23 @@ public class EnemyController : CharacterBase
     private int facingDirection = 1;                // 캐릭터가 바라보는 방향
     public int FacingDirection => facingDirection;
 
+    private Vector3 lastSeenPosition;               //마지막으로 플레이어를 본 위치
+
+    public float stoppingDistance = 1.8f;          //마지막으로 본 위치에 도달했다고 판정하는 거리
+
     // 공격 관련 --------------------------------------------------------------------------------------------
 
-    /// <summary>
-    /// 공격 대상
-    /// </summary>
-    PlayerController attackTarget = null;
-
-    /// <summary>
-    /// 공격 시간 간격
-    /// </summary>
-    public float attackInterval = 1.0f;
-
-    /// <summary>
-    /// 공격 시간 측정용
-    /// </summary>
-    float attackElapsed = 0;
-
-    /// <summary>
-    /// 공격력 패널티 정도
-    /// </summary>
-    float attackPowerPenalty = 0;
+    [Header("Attack")]
+    [SerializeField] private int currentAttack = 0; // 현재 공격 단계
+    private float timeSinceAttack = 0.0f;           // 마지막 공격 이후 경과 시간
+    [SerializeField]
+    private float attackDelay = 1.5f;              // 공격 대기 시간
+    private float attackForce = 2.0f;               // 공격 시 앞으로 나갈 거리
+    public float attackDistance = 3.0f;                // 공격 가능 거리
+    public Action onAttack;
 
     // 탐색 관련 -------------------------------------------------------------------------------------------
-
+    [Header("Find")]
     /// <summary>
     /// 탐색 상태에서 배회 상태로 돌아가기까지 걸리는 시간
     /// </summary>
@@ -125,11 +118,12 @@ public class EnemyController : CharacterBase
     /// <summary>
     /// 추적 대상
     /// </summary>
-    [SerializeField] Transform chaseTarget = null;
+    [SerializeField] private PlayerController player = null;
 
     //컴포넌트
     private EnemySensor_Search enemySensor = null;
     private Rigidbody2D rigid;
+    private Animator animator;
 
     // UnityEvent Functions--------------------------------------------------------------------------------------------------------
     #region UnityEvent Functions
@@ -137,9 +131,16 @@ public class EnemyController : CharacterBase
     private void Awake()
     {
         rigid = GetComponent<Rigidbody2D>();
+        animator = GetComponent<Animator>();
 
         enemySensor = transform.GetChild(0).GetComponent<EnemySensor_Search>();
-        enemySensor.onSensorTriggered += () => State = BehaviorState.Chase;
+
+        //Enemy의 탐지 범위에 닿으면 위치를 전송하고 state를 chase로 변경
+        enemySensor.onSearchSensor += (playerPosition) =>
+        {
+            lastSeenPosition = playerPosition;
+            State = BehaviorState.Chase;
+        };
 
         RefreshPatrol();
 
@@ -156,17 +157,12 @@ public class EnemyController : CharacterBase
         //};
     }
 
-    private void RefreshPatrol()
-    {
-        leftPatrol = transform.position.x - patrolRange;
-        rightPatrol = transform.position.x + patrolRange;
-    }
 
     private void Start()
     {
         State = BehaviorState.Patrol;
 
-        chaseTarget = GameManager.Instance.Player.transform;
+        player = GameManager.Instance.Player;
     }
 
     private void OnEnable()
@@ -210,21 +206,25 @@ public class EnemyController : CharacterBase
             }
         }
 
-        // 목적지에 도착했으면 다시 랜덤 위치로 이동
+        // 플레이어가 탐색센서에 닿으면 CHase로 변경
 
     }
 
     void Update_Chase()
     {
-        //if (IsPlayerInSight(out Vector3 position))
-        //{
-        //    agent.SetDestination(position); // 마지막 목격 장소를 목적지로 새로 설정
-        //}
-        //else if (!agent.pathPending && agent.remainingDistance <= agent.stoppingDistance)
-        //{
-        //    // 플레이어가 안보이고 마지막 목격지에 도착했다 => 찾기 상태로 전화
-        //    State = BehaviorState.Find;
-        //}
+        if (IsPlayerInSight(out Vector3 position))
+        {
+            lastSeenPosition = position; // 플레이어의 마지막 위치 저장
+        }
+
+        MoveTowards(lastSeenPosition); // 마지막 위치로 이동
+
+        // 현재 위치의 x가 lastSeenPosition의 x에 거의 도달했는지 확인
+        if (Mathf.Abs(transform.position.x - lastSeenPosition.x) <= stoppingDistance)
+        {
+            // 상태를 Find로 변경
+            State = BehaviorState.Find;
+        }
     }
 
     void Update_Find()
@@ -240,9 +240,36 @@ public class EnemyController : CharacterBase
         }
     }
 
+    public float testDistanceSq = 0;
+    public float testATKDisSq = 0;
+
     void Update_Attack()
     {
+        //공격 딜레이용 시간변수
+        timeSinceAttack += Time.deltaTime;
 
+        // 플레이어와의 거리의 제곱 계산
+        float distanceSquared = (transform.position - player.transform.position).sqrMagnitude;
+
+        // 공격 범위의 제곱 계산
+        float attackDistanceSquared = attackDistance * attackDistance;
+
+        testDistanceSq = distanceSquared;
+        testATKDisSq = attackDistanceSquared;
+
+        // 플레이어와의 거리가 공격 범위보다 큰지 확인
+        if (distanceSquared >= attackDistanceSquared)
+        {
+            State = BehaviorState.Chase;
+        }
+        else
+        {
+            // 공격 로직
+            if (timeSinceAttack > attackDelay)
+            {
+                AttackTry();
+            }
+        }
     }
 
     void Update_Dead()
@@ -301,7 +328,6 @@ public class EnemyController : CharacterBase
                 //case BehaviorState.Chase:
                 break;
         }
-
         /*
          switch (oldState)
         {            
@@ -325,6 +351,80 @@ public class EnemyController : CharacterBase
          */
     }
 
+    /// <summary>
+    /// 플레이어가 시야범위 안에 있는지 확인하는 함수
+    /// </summary>
+    /// <param name="position">플레이어가 시야범위 안에 있을 때 플레이어의 위치</param>
+    /// <returns>true면 시야범위 안에 있다. false면 시야범위 안에 없다.</returns>
+    private bool IsPlayerInSight(out Vector3 position)
+    {
+        position = Vector3.zero;
+
+        // 플레이어가 감지되면 true 반환 및 position에 플레이어 위치 설정
+        float detectionRadius = 3.0f;
+        Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, detectionRadius);
+        foreach (var hit in hits)
+        {
+            if (hit.CompareTag("Player"))
+            {
+                position = hit.transform.position;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void MoveTowards(Vector3 targetPosition)
+    {
+        targetPosition = new Vector3(targetPosition.x, 0, 0);
+        Vector3 myPosition = new Vector3(transform.position.x, 0, 0);
+        Vector2 direction = (targetPosition - myPosition).normalized;
+        rigid.velocity = direction * runSpeed;
+    }
+
+
+    private void RefreshPatrol()
+    {
+        leftPatrol = transform.position.x - patrolRange;
+        rightPatrol = transform.position.x + patrolRange;
+    }
+
+    //State를 Attack으로 변경한다. AttackSensor에서 사용
+    public void SetAttackState()
+    {
+        State = BehaviorState.Attack;
+    }
+
+    private void AttackTry()
+    {
+            currentAttack++;
+            if (currentAttack > 3)
+                currentAttack = 1;
+            if (timeSinceAttack > 4.5f)
+                currentAttack = 1;
+            //아직 애니메이션 없어서 주석처리함
+            //animator.SetTrigger("Attack" + currentAttack);
+            timeSinceAttack = 0.0f;
+
+            //공격 눌렀다고 알림
+            onAttack?.Invoke();
+
+            StartCoroutine(Attacking_Physics());
+        
+    }
+
+    /// <summary>
+    /// 공격 시 물리 적용 코루틴 + state 변화
+    /// </summary>
+    /// <returns></returns>
+    IEnumerator Attacking_Physics()
+    {
+        rigid.velocity = new Vector2(attackForce * facingDirection, rigid.velocity.y);
+        yield return new WaitForSeconds(attackDelay);
+    }
+
+    // 미구현-----------------------------------------------------------------------------
+
 
     /// <summary>
     /// 공격 당함을 처리하는 함수
@@ -342,17 +442,6 @@ public class EnemyController : CharacterBase
     /// <returns>true면 플레이어를 찾았다. false면 못찾았다.</returns>
     bool FindPlayer()
     {
-        return false;
-    }
-
-    /// <summary>
-    /// 플레이어가 시야범위 안에 있는지 확인하는 함수
-    /// </summary>
-    /// <param name="position">플레이어가 시야범위 안에 있을 때 플레이어의 위치</param>
-    /// <returns>true면 시야범위 안에 있다. false면 시야범위 안에 없다.</returns>
-    bool IsPlayerInSight(out Vector3 position)
-    {
-        position = Vector3.zero;
         return false;
     }
 
