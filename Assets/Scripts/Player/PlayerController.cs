@@ -32,6 +32,14 @@ public class PlayerController : CharacterBase
     [SerializeField] private float rollDelay = 1.0f;
     private float timeSinceRoll = 0.0f;             // 구르기 가능 시간 판단 변수
 
+    [Header("Block")]
+    [SerializeField] private float blockMultiplier = 0.5f;
+    public bool isParryAble = false;
+    public bool isBlockAble = false;
+    public float parryTime_origin = 2.0f;
+    public float parryTime_cur = 0.0f; 
+    public Action onParry;  //패리 성공시 발동액션 
+
     [Header("Gravity")]
     private Vector2 inputDirection = Vector2.zero;  // 입력 방향
     public static float defaultGravityScale = 1f;               //기본 중력 값
@@ -75,9 +83,9 @@ public class PlayerController : CharacterBase
     readonly int AirSpeedY_Hash = Animator.StringToHash("AirSpeedY");
     readonly int IsGround_Hash = Animator.StringToHash("Grounded");
     readonly int Roll_Hash = Animator.StringToHash("Roll");
-    readonly int Block_Hash = Animator.StringToHash("Block");
-    readonly int IdleBlock_Hash = Animator.StringToHash("IdleBlock");
     readonly int AnimState_Hash = Animator.StringToHash("AnimState");
+    readonly int IdleBlock_Hash = Animator.StringToHash("IdleBlock");
+    readonly int Parry_Hash = Animator.StringToHash("Parry");
 
     private Animator animator;                      // 애니메이터
     private Rigidbody2D rigid;                      // 리지드바디
@@ -123,6 +131,8 @@ public class PlayerController : CharacterBase
     // 방패 내리기 이벤트 처리
     private void OnBlockCanceled()
     {
+        isBlockAble = false;
+        isParryAble = false;
         animator.SetBool(IdleBlock_Hash, false);
     }
 
@@ -131,7 +141,9 @@ public class PlayerController : CharacterBase
     {
         if (!isRolling)
         {
-            animator.SetTrigger(Block_Hash);
+            //animator.SetTrigger(Block_Hash);
+            isBlockAble = true;
+            isParryAble = true;
             animator.SetBool(IdleBlock_Hash, true);
         }
     }
@@ -248,6 +260,8 @@ public class PlayerController : CharacterBase
         //구르기 딜레이용 시간변수
         timeSinceRoll += Time.deltaTime;
 
+        //block, parry, hit용 타이머
+        ParryTimer();
     }
 
     //----------------------------- 물리 업데이트-------------------------------------------------------------------------------------__________________---------------------
@@ -314,6 +328,56 @@ public class PlayerController : CharacterBase
         //공격에 성공하면 전진거리의 절반만큼 뒤로 물러남
         rigid.velocity = new Vector2(attackForce * -facingDirection * 0.5f, rigid.velocity.y);
     }
+
+    #region 가드패리 함수 OnBlockInput, ontriggerEnter에서 사용
+
+    /// <summary>
+    /// 데미지를 입는 순간에 블록 or 패리 or 피격인지 판단
+    /// </summary>
+    /// <param name="damage"></param>
+    public override void TakeDamage(float damage)
+    {
+        if (isParryAble)
+        {
+            onParry?.Invoke();
+            animator.SetTrigger(Parry_Hash);
+            ParryTimerReset();
+            Debug.Log("패리성공");
+        }
+        else if (isBlockAble)
+        {
+            CurrentHealth -= (damage * blockMultiplier);
+            BlockComplete();
+            Debug.Log("가드로 막음");
+        }
+        else
+        {
+            CurrentHealth -= damage;
+            ParryTimerReset();
+            Debug.Log("그냥 맞아버림");
+        }
+    }
+
+    void ParryTimer()   //패리 가능한 시간 계산 함수
+    {
+        if (isParryAble)    //패리가 가능할 때 parryTime_cur은 타이머 처럼 상승
+            parryTime_cur += Time.deltaTime;
+
+        if (parryTime_cur > parryTime_origin)    //패리 가능 시간을 넘기면 패리 불가능
+            isParryAble = false;
+    }
+
+    void ParryTimerReset()  //패리 성공 또는 피격 후 패리 가능 시간 초기화
+    {
+        parryTime_cur = 0;
+        isParryAble = false;
+    }
+
+    void BlockComplete()    //가드 성공 시 패리 가능 시간 소폭 연장
+    {
+        parryTime_cur -= 0.1f;
+    }
+    #endregion
 
 #if UNITY_EDITOR
 

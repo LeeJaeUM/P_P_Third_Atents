@@ -39,7 +39,7 @@ public class CharacterBase : MonoBehaviour, ICombat.IAttack, ICombat.IDamage, IC
     }
 
     // 피해 받기 함수
-    public void TakeDamage(float damage)
+    public virtual void TakeDamage(float damage)
     {
         // 피해 로직 구현
         CurrentHealth -= damage;
