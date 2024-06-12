@@ -38,10 +38,10 @@ public class Enemy_Plant : EnemyController
         isAttacking = false;
     }
 
-    private void DoAttack()
+    protected override void DoAttack()
     {
-        //공격 눌렀다고 알림 = 공격 범위 활성화
-        onAttack?.Invoke();
+        base.DoAttack();    //액션 하나 onAttack?.Invoke();
         attackSpriteRenderer.enabled = false;
     }
+
 }

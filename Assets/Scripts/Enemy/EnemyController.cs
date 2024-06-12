@@ -145,7 +145,7 @@ public class EnemyController : CharacterBase
     /// <summary>
     /// 추적 대상
     /// </summary>
-    [SerializeField] private PlayerController player = null;
+    private PlayerController player = null;
 
     public float chaseDis = 7.0f;
 
@@ -158,7 +158,7 @@ public class EnemyController : CharacterBase
     private EnemySensor_Search enemySensor = null;
     protected Rigidbody2D rigid;
     protected Animator animator;
-    [SerializeField] private SpriteRenderer spriteRenderer;
+    private SpriteRenderer spriteRenderer;
 
     // UnityEvent Functions--------------------------------------------------------------------------------------------------------
     #region UnityEvent Functions
@@ -465,21 +465,22 @@ public class EnemyController : CharacterBase
     //공격 시작 함수
     protected virtual void AttackTry()
     {
-        currentAttack++;
-        if (currentAttack > 3)
-            currentAttack = 1;
-        if (timeSinceAttack > 4.5f)
-            currentAttack = 1;
+        //currentAttack++;
+        //if (currentAttack > 3)
+        //    currentAttack = 1;
+        //if (timeSinceAttack > 4.5f)
+        //    currentAttack = 1;
         //아직 애니메이션 없어서 주석처리함
         //animator.SetTrigger("Attack" + currentAttack);
+        //
+        //공격 눌렀다고 알림 = 공격 범위 활성화 
+        onAttack?.Invoke();         //DoAttack() 함수로 대신 사용해서 애니메이션 이벤트로 활용
+
+
+
         timeSinceAttack = 0.0f;
-
-        //공격 눌렀다고 알림 = 공격 범위 활성화
-        onAttack?.Invoke();
-
+        
         animator.SetTrigger("Attack");
-
-
 
         StartCoroutine(Attacking_Physics());
     }
@@ -496,6 +497,15 @@ public class EnemyController : CharacterBase
         isAttacking = false;
     }
 
+    /// <summary>
+    /// 공격 범위 활성화 델리게이트 전송 함수
+    /// </summary>
+    protected virtual void DoAttack()
+    {
+        //공격 눌렀다고 알림 = 공격 범위 활성화
+        onAttack?.Invoke();
+    }
+
     private void SetFacingDirection()
     {
         if (transform.position.x < player.transform.position.x)
@@ -505,7 +515,8 @@ public class EnemyController : CharacterBase
     }
 
     // 미구현-----------------------------------------------------------------------------
-
+    // ---------------------미구현--------------------------------------------------------
+    // ------------------------------------미구현-----------------------------------------
 
     /// <summary>
     /// 공격 당함을 처리하는 함수

@@ -342,6 +342,10 @@ public class PlayerController : CharacterBase
             onParry?.Invoke();
             animator.SetTrigger(Parry_Hash);
             ParryTimerReset();
+
+            // 패링 시 느려짐 효과 테스트
+            StartCoroutine(TimeSlow());
+
             Debug.Log("패리성공");
         }
         else if (isBlockAble)
@@ -378,6 +382,13 @@ public class PlayerController : CharacterBase
         parryTime_cur -= 0.1f;
     }
     #endregion
+
+    private IEnumerator TimeSlow()
+    {
+        Time.timeScale = 0.6f;
+        yield return new WaitForSeconds(0.7f);
+        Time.timeScale = 1.0f;
+    }
 
 #if UNITY_EDITOR
 
