@@ -16,7 +16,7 @@ public class EnemySensorBase : MonoBehaviour
         offsetX = rangeCollider.offset.x;
         offsetY = rangeCollider.offset.y;
     }
-    private void Update()
+    protected virtual void Update()
     {
         rangeCollider.offset = new Vector2(offsetX * enemy.FacingDirection, offsetY);
     }

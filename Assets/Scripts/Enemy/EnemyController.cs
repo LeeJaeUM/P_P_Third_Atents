@@ -86,6 +86,8 @@ public class EnemyController : CharacterBase
     public float patrolRange = 3;
     [SerializeField] private bool isRightPatrol = true;
 
+
+    [Header("Sprite")]
     /// <summary>
     /// 스프라이트가 기본적으로 오른쪽일때 true. facingDirection에 따라 sprite가 flip할때 기준을 정함
     /// </summary>
@@ -100,9 +102,9 @@ public class EnemyController : CharacterBase
             {
                 facingDirection = value;
                 if(facingDirection > 0)
-                    spriteRenderer.flipX = isSpriteRight;
-                else
                     spriteRenderer.flipX = !isSpriteRight;
+                else
+                    spriteRenderer.flipX = isSpriteRight;
             }
         }
     }
@@ -143,6 +145,13 @@ public class EnemyController : CharacterBase
     /// 추적 대상
     /// </summary>
     [SerializeField] private PlayerController player = null;
+
+    public float chaseDis = 7.0f;
+
+    [Header("Test V")]
+    public float testATKDisSq = 0;      //공격거리 판단
+    public float testRayYMulti = 0.5f;  //디버그레이 Y위치 
+    public float lastX = 0;
 
     //컴포넌트
     private EnemySensor_Search enemySensor = null;
@@ -198,6 +207,7 @@ public class EnemyController : CharacterBase
     private void Update()
     {
         onUpdate();
+        lastX = lastSeenPosition.x;
     }
 
     #endregion
@@ -241,6 +251,7 @@ public class EnemyController : CharacterBase
 
         if (IsPlayerInSight(out Vector3 position))
         {
+            Debug.Log("플레이어 찾았음 시ㄴ야내에있음");
             lastSeenPosition = position; // 플레이어의 마지막 위치 저장
         }
 
@@ -263,7 +274,6 @@ public class EnemyController : CharacterBase
         }
     }
 
-    public float testATKDisSq = 0;
 
     void Update_Attack()
     {
@@ -294,7 +304,8 @@ public class EnemyController : CharacterBase
 
     void Update_Dead()
     {
-
+        //animator.SetTrigger("Die");
+        Destroy(this.gameObject, 2f);
     }
 
     #endregion
@@ -375,6 +386,7 @@ public class EnemyController : CharacterBase
          */
     }
 
+
     /// <summary>
     /// 플레이어가 시야범위 안에 있는지 확인하는 함수
     /// </summary>
@@ -384,17 +396,42 @@ public class EnemyController : CharacterBase
     {
         position = Vector3.zero;
 
-        // 플레이어가 감지되면 true 반환 및 position에 플레이어 위치 설정
-        float detectionRadius = 3.0f;
-        Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, detectionRadius);
-        foreach (var hit in hits)
+        // 레이캐스트의 길이 (거리) chaseDis
+
+        // 레이캐스트의 방향 (적의 앞 방향)
+        Vector2 direction = transform.right * facingDirection;
+
+        // 디버그 라인을 그리기 위한 시작점과 끝점
+        Vector2 startPoint = transform.position + Vector3.up * testRayYMulti;
+        Vector2 endPoint = startPoint + direction * chaseDis;
+
+        // 레이어 마스크 설정 (Enemy 레이어를 무시)
+        //int layerMask = ~(1 << LayerMask.NameToLayer("Enemy"));
+
+        // 레이어 마스크 설정 (Enemy 레이어와 EnemyAttack 레이어를 무시)
+        int enemyLayer = LayerMask.NameToLayer("Enemy");
+        int enemyAttackLayer = LayerMask.NameToLayer("EnemyAttack");
+        int layerMask = ~(1 << enemyLayer | 1 << enemyAttackLayer);
+
+        // 레이캐스트 발사
+        RaycastHit2D hit = Physics2D.Raycast(startPoint, direction, chaseDis, layerMask);
+
+        // 디버그 라인 그리기 (색상: 빨강)
+        Debug.DrawLine(startPoint, endPoint, Color.red);
+
+        if(hit.collider != null)
         {
-            if (hit.CompareTag("Player"))
-            {
-                position = hit.transform.position;
-                return true;
-            }
+            Debug.Log(hit.collider.gameObject.name);
         }
+
+        // 레이캐스트가 충돌한 경우
+        if (hit.collider != null && hit.collider.CompareTag("Player"))
+        {
+            Debug.DrawLine(startPoint + Vector2.up * testRayYMulti, endPoint, Color.red);
+            position = hit.transform.position;
+            return true;
+        }
+
         return false;
     }
 
@@ -421,6 +458,7 @@ public class EnemyController : CharacterBase
 
     private void AttackTry()
     {
+        isAttacking = true;
         currentAttack++;
         if (currentAttack > 3)
             currentAttack = 1;
@@ -446,6 +484,8 @@ public class EnemyController : CharacterBase
     {
         rigid.velocity = new Vector2(attackForce * facingDirection, rigid.velocity.y);
         yield return new WaitForSeconds(attackDelay);
+
+        isAttacking = false;
     }
 
     private void SetFacingDirection()
