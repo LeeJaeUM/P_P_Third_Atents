@@ -427,7 +427,7 @@ public class EnemyController : CharacterBase
         // 레이캐스트가 충돌한 경우
         if (hit.collider != null && hit.collider.CompareTag("Player"))
         {
-            Debug.DrawLine(startPoint + Vector2.up * testRayYMulti, endPoint, Color.red);
+            Debug.DrawLine(startPoint + Vector2.up * testRayYMulti, endPoint, Color.yellow);
             position = hit.transform.position;
             return true;
         }
