@@ -156,7 +156,7 @@ public class EnemyController : CharacterBase
 
     //컴포넌트
     private EnemySensor_Search enemySensor = null;
-    private Rigidbody2D rigid;
+    protected Rigidbody2D rigid;
     protected Animator animator;
     [SerializeField] private SpriteRenderer spriteRenderer;
 
