@@ -16,6 +16,10 @@ PrefabInstance:
       propertyPath: attackDistance
       value: 4.36
       objectReference: {fileID: 0}
+    - target: {fileID: 3009757768797645425, guid: 2e3a4dc2e664d394b87cfb81dc37d5ba, type: 3}
+      propertyPath: m_Controller
+      value: 
+      objectReference: {fileID: 22100000, guid: 83521cb3fa2b73e4ea58f03cbe0f8c10, type: 2}
     - target: {fileID: 3527190584161322262, guid: 2e3a4dc2e664d394b87cfb81dc37d5ba, type: 3}
       propertyPath: m_BodyType
       value: 2
@@ -24,6 +28,14 @@ PrefabInstance:
       propertyPath: m_Controller
       value: 
       objectReference: {fileID: 22100000, guid: 83521cb3fa2b73e4ea58f03cbe0f8c10, type: 2}
+    - target: {fileID: 6014616495599680971, guid: 2e3a4dc2e664d394b87cfb81dc37d5ba, type: 3}
+      propertyPath: m_Size.x
+      value: 3.8125
+      objectReference: {fileID: 0}
+    - target: {fileID: 6014616495599680971, guid: 2e3a4dc2e664d394b87cfb81dc37d5ba, type: 3}
+      propertyPath: m_Size.y
+      value: 2.8125
+      objectReference: {fileID: 0}
     - target: {fileID: 6014616495599680971, guid: 2e3a4dc2e664d394b87cfb81dc37d5ba, type: 3}
       propertyPath: m_Sprite
       value: 
@@ -72,8 +84,55 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 1532642708691770535, guid: 2e3a4dc2e664d394b87cfb81dc37d5ba, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 8490913845304357038, guid: 2e3a4dc2e664d394b87cfb81dc37d5ba, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5443693738467491066}
   m_SourcePrefab: {fileID: 100100000, guid: 2e3a4dc2e664d394b87cfb81dc37d5ba, type: 3}
+--- !u!1 &2520569257911742830 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8490913845304357038, guid: 2e3a4dc2e664d394b87cfb81dc37d5ba, type: 3}
+  m_PrefabInstance: {fileID: 6282263393421656512}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &5443693738467491066
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2520569257911742830}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 226b1a186e5c8c148ac8bb628a358d0a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxHealth: 100
+  currentHealth: 100
+  attackPower: 10
+  state: 4
+  walkSpeed: 2
+  runSpeed: 3
+  leftPatrol: 0
+  rightPatrol: 0
+  patrolRange: 3
+  isRightPatrol: 1
+  isSpriteRight: 0
+  facingDirection: 1
+  stoppingDistance: 1.8
+  currentAttack: 0
+  attackDelay: 1.5
+  attackForce: 2
+  attackDistance: 3
+  isAttacking: 0
+  timeAttackElaped: 1
+  findTime: 5
+  player: {fileID: 0}
+  chaseDis: 7
+  testATKsinceTIme: 0
+  testRayYMulti: 0.5
+  lastX: 0
+  spriteRenderer: {fileID: 0}

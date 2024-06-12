@@ -117,17 +117,18 @@ public class EnemyController : CharacterBase
 
     public float stoppingDistance = 1.8f;          //마지막으로 본 위치에 도달했다고 판정하는 거리
 
-    // 공격 관련 --------------------------------------------------------------------------------------------
+    // 공격 관련 ----------------------++++++++$$$$$$$$$$$+++++=-----------------------------------------------------
 
     [Header("Attack")]
-    [SerializeField] private int currentAttack = 0;         // 현재 공격 단계
-    private float timeSinceAttack = 0.0f;                   // 마지막 공격 이후 경과 시간
-    [SerializeField] private float attackDelay = 1.5f;      // 공격 대기 시간
-    [SerializeField] private float attackForce = 2.0f;      // 공격 시 앞으로 나갈 거리
+    [SerializeField] protected int currentAttack = 0;         // 현재 공격 단계
+    protected float timeSinceAttack = 0.0f;                   // 마지막 공격 이후 경과 시간
+    [SerializeField] protected float attackDelay = 1.5f;      // 공격 대기 시간
+    [SerializeField] protected float attackForce = 2.0f;      // 공격 시 앞으로 나갈 거리
     public float attackDistance = 3.0f;                     // 공격 가능 거리
     public Action onAttack;
     public Action onExitAttackState;
-    [SerializeField] private bool isAttacking = false;      // 공격중인지 판단하는 변수
+    [SerializeField] protected bool isAttacking = false;      // 공격중인지 판단하는 변수
+    [SerializeField] protected float timeAttackElaped = 1f;      // 공격중인지 판단하는 변수
 
     // 탐색 관련 -------------------------------------------------------------------------------------------
     [Header("Find")]
@@ -149,23 +150,23 @@ public class EnemyController : CharacterBase
     public float chaseDis = 7.0f;
 
     [Header("Test V")]
-    public float testATKDisSq = 0;      //공격거리 판단
+    public float testATKsinceTIme = 0;      //공격거리 판단
     public float testRayYMulti = 0.5f;  //디버그레이 Y위치 
     public float lastX = 0;
 
     //컴포넌트
     private EnemySensor_Search enemySensor = null;
     private Rigidbody2D rigid;
-    private Animator animator;
+    protected Animator animator;
     [SerializeField] private SpriteRenderer spriteRenderer;
 
     // UnityEvent Functions--------------------------------------------------------------------------------------------------------
     #region UnityEvent Functions
 
-    private void Awake()
+    protected virtual void Awake()
     {
         rigid = GetComponent<Rigidbody2D>();
-        animator = GetComponentInChildren<Animator>();
+        animator = GetComponent<Animator>();
         spriteRenderer = transform.GetChild(0).GetComponent<SpriteRenderer>();
         enemySensor = transform.GetChild(1).GetComponent<EnemySensor_Search>();
 
@@ -208,6 +209,7 @@ public class EnemyController : CharacterBase
     {
         onUpdate();
         lastX = lastSeenPosition.x;
+        testATKsinceTIme = timeSinceAttack;
     }
 
     #endregion
@@ -251,7 +253,6 @@ public class EnemyController : CharacterBase
 
         if (IsPlayerInSight(out Vector3 position))
         {
-            Debug.Log("플레이어 찾았음 시ㄴ야내에있음");
             lastSeenPosition = position; // 플레이어의 마지막 위치 저장
         }
 
@@ -280,15 +281,14 @@ public class EnemyController : CharacterBase
         //공격 딜레이용 시간변수
         timeSinceAttack += Time.deltaTime;
 
-        testATKDisSq = Mathf.Abs(transform.position.x - player.transform.position.x);
-
+        //공격중엔 회전 안함
         if (!isAttacking)
         {
             SetFacingDirection();
         }
 
-        // 플레이어와의 x축 거리 계산 후 공격거리보다 크면 chase로 변경
-        if (Mathf.Abs(transform.position.x - player.transform.position.x) > attackDistance)
+        // 플레이어와의 x축 거리 계산 후 공격거리보다 크고 공격중이 아니면 chase로 변경
+        if (Mathf.Abs(transform.position.x - player.transform.position.x) > attackDistance && !isAttacking)
         {
             State = BehaviorState.Chase;
         }
@@ -419,10 +419,10 @@ public class EnemyController : CharacterBase
         // 디버그 라인 그리기 (색상: 빨강)
         Debug.DrawLine(startPoint, endPoint, Color.red);
 
-        if(hit.collider != null)
-        {
-            Debug.Log(hit.collider.gameObject.name);
-        }
+        //if(hit.collider != null)
+        //{
+        //    Debug.Log(hit.collider.gameObject.name);
+        //}
 
         // 레이캐스트가 충돌한 경우
         if (hit.collider != null && hit.collider.CompareTag("Player"))
@@ -435,6 +435,10 @@ public class EnemyController : CharacterBase
         return false;
     }
 
+    /// <summary>
+    /// 위치로 이동하는 함수
+    /// </summary>
+    /// <param name="targetPosition">이동할 위치</param>
     private void MoveTowards(Vector3 targetPosition)
     {
         targetPosition = new Vector3(targetPosition.x, 0, 0);
@@ -443,7 +447,9 @@ public class EnemyController : CharacterBase
         rigid.velocity = direction * runSpeed;
     }
 
-
+    /// <summary>
+    /// Patrol 할 좌우 X 위치 지정 함수
+    /// </summary>
     private void RefreshPatrol()
     {
         leftPatrol = transform.position.x - patrolRange;
@@ -456,9 +462,9 @@ public class EnemyController : CharacterBase
         State = BehaviorState.Attack;
     }
 
-    private void AttackTry()
+    //공격 시작 함수
+    protected virtual void AttackTry()
     {
-        isAttacking = true;
         currentAttack++;
         if (currentAttack > 3)
             currentAttack = 1;
@@ -468,23 +474,25 @@ public class EnemyController : CharacterBase
         //animator.SetTrigger("Attack" + currentAttack);
         timeSinceAttack = 0.0f;
 
-        //공격 눌렀다고 알림
+        //공격 눌렀다고 알림 = 공격 범위 활성화
         onAttack?.Invoke();
 
         animator.SetTrigger("Attack");
+
+
 
         StartCoroutine(Attacking_Physics());
     }
 
     /// <summary>
-    /// 공격 시 물리 적용 코루틴 + state 변화
+    /// 공격 시 물리 적용 코루틴 + timeAttackElaped만큼 기다린 후 isAttacking false로 전환
     /// </summary>
     /// <returns></returns>
-    IEnumerator Attacking_Physics()
+    protected virtual IEnumerator Attacking_Physics()
     {
+        isAttacking = true;
         rigid.velocity = new Vector2(attackForce * facingDirection, rigid.velocity.y);
-        yield return new WaitForSeconds(attackDelay);
-
+        yield return new WaitForSeconds(timeAttackElaped);
         isAttacking = false;
     }
 
