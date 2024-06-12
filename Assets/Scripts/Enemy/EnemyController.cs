@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 
 public class EnemyController : CharacterBase
@@ -75,7 +76,7 @@ public class EnemyController : CharacterBase
     /// <summary>
     /// 이동 속도(추적 및 공격 상태에서 사용)
     /// </summary>
-    public float runSpeed = 4.0f;
+    public float runSpeed = 3.0f;
 
     // Patrol(순찰) 관련
     [Header("Patrol")]
@@ -85,10 +86,32 @@ public class EnemyController : CharacterBase
     public float patrolRange = 3;
     [SerializeField] private bool isRightPatrol = true;
 
-    private int facingDirection = 1;                // 캐릭터가 바라보는 방향
-    public int FacingDirection => facingDirection;
+    /// <summary>
+    /// 스프라이트가 기본적으로 오른쪽일때 true. facingDirection에 따라 sprite가 flip할때 기준을 정함
+    /// </summary>
+    public bool isSpriteRight = true;
+    [SerializeField] private int facingDirection = 1;                // 캐릭터가 바라보는 방향
+    public int FacingDirection
+    {
+        get => facingDirection;
+        private set
+        {
+            if(facingDirection != value)
+            {
+                facingDirection = value;
+                if(facingDirection > 0)
+                    spriteRenderer.flipX = isSpriteRight;
+                else
+                    spriteRenderer.flipX = !isSpriteRight;
+            }
+        }
+    }
 
-    private Vector3 lastSeenPosition;               //마지막으로 플레이어를 본 위치
+
+    /// <summary>
+    /// 마지막으로 플레이어를 본 위치. 서치센서가 인식했을 때 chase로 state를 바꾸면서 최신화함
+    /// </summary>
+    private Vector3 lastSeenPosition;               
 
     public float stoppingDistance = 1.8f;          //마지막으로 본 위치에 도달했다고 판정하는 거리
 
@@ -102,6 +125,7 @@ public class EnemyController : CharacterBase
     public float attackDistance = 3.0f;                     // 공격 가능 거리
     public Action onAttack;
     public Action onExitAttackState;
+    [SerializeField] private bool isAttacking = false;      // 공격중인지 판단하는 변수
 
     // 탐색 관련 -------------------------------------------------------------------------------------------
     [Header("Find")]
@@ -124,6 +148,7 @@ public class EnemyController : CharacterBase
     private EnemySensor_Search enemySensor = null;
     private Rigidbody2D rigid;
     private Animator animator;
+    [SerializeField] private SpriteRenderer spriteRenderer;
 
     // UnityEvent Functions--------------------------------------------------------------------------------------------------------
     #region UnityEvent Functions
@@ -131,9 +156,9 @@ public class EnemyController : CharacterBase
     private void Awake()
     {
         rigid = GetComponent<Rigidbody2D>();
-        animator = GetComponent<Animator>();
-
-        enemySensor = transform.GetChild(0).GetComponent<EnemySensor_Search>();
+        animator = GetComponentInChildren<Animator>();
+        spriteRenderer = transform.GetChild(0).GetComponent<SpriteRenderer>();
+        enemySensor = transform.GetChild(1).GetComponent<EnemySensor_Search>();
 
         //Enemy의 탐지 범위에 닿으면 위치를 전송하고 state를 chase로 변경
         enemySensor.onSearchSensor += (playerPosition) =>
@@ -189,7 +214,7 @@ public class EnemyController : CharacterBase
             }
             else
             {
-                facingDirection = -1;
+                FacingDirection = -1;
                 isRightPatrol = false;
             }
         }
@@ -201,7 +226,7 @@ public class EnemyController : CharacterBase
             }
             else
             {
-                facingDirection = 1;
+                FacingDirection = 1;
                 isRightPatrol = true;
             }
         }
@@ -212,6 +237,8 @@ public class EnemyController : CharacterBase
 
     void Update_Chase()
     {
+        SetFacingDirection();
+
         if (IsPlayerInSight(out Vector3 position))
         {
             lastSeenPosition = position; // 플레이어의 마지막 위치 저장
@@ -243,9 +270,15 @@ public class EnemyController : CharacterBase
         //공격 딜레이용 시간변수
         timeSinceAttack += Time.deltaTime;
 
+        testATKDisSq = Mathf.Abs(transform.position.x - player.transform.position.x);
 
-        // 플레이어와의 x축 거리 계산
-        if (Mathf.Abs(transform.position.x - player.transform.position.x) >= 4f)
+        if (!isAttacking)
+        {
+            SetFacingDirection();
+        }
+
+        // 플레이어와의 x축 거리 계산 후 공격거리보다 크면 chase로 변경
+        if (Mathf.Abs(transform.position.x - player.transform.position.x) > attackDistance)
         {
             State = BehaviorState.Chase;
         }
@@ -257,7 +290,6 @@ public class EnemyController : CharacterBase
                 AttackTry();
             }
         }
-        testATKDisSq = Mathf.Abs(transform.position.x - player.transform.position.x);
     }
 
     void Update_Dead()
@@ -276,6 +308,8 @@ public class EnemyController : CharacterBase
         switch (newState)
         {
             case BehaviorState.Patrol:
+                isRightPatrol = true;
+                FacingDirection = 1;
                 onUpdate = Update_Patrol;
                 break;
             case BehaviorState.Chase:
@@ -387,20 +421,21 @@ public class EnemyController : CharacterBase
 
     private void AttackTry()
     {
-            currentAttack++;
-            if (currentAttack > 3)
-                currentAttack = 1;
-            if (timeSinceAttack > 4.5f)
-                currentAttack = 1;
-            //아직 애니메이션 없어서 주석처리함
-            //animator.SetTrigger("Attack" + currentAttack);
-            timeSinceAttack = 0.0f;
+        currentAttack++;
+        if (currentAttack > 3)
+            currentAttack = 1;
+        if (timeSinceAttack > 4.5f)
+            currentAttack = 1;
+        //아직 애니메이션 없어서 주석처리함
+        //animator.SetTrigger("Attack" + currentAttack);
+        timeSinceAttack = 0.0f;
 
-            //공격 눌렀다고 알림
-            onAttack?.Invoke();
+        //공격 눌렀다고 알림
+        onAttack?.Invoke();
 
-            StartCoroutine(Attacking_Physics());
-        
+        animator.SetTrigger("Attack");
+
+        StartCoroutine(Attacking_Physics());
     }
 
     /// <summary>
@@ -411,6 +446,14 @@ public class EnemyController : CharacterBase
     {
         rigid.velocity = new Vector2(attackForce * facingDirection, rigid.velocity.y);
         yield return new WaitForSeconds(attackDelay);
+    }
+
+    private void SetFacingDirection()
+    {
+        if (transform.position.x < player.transform.position.x)
+            FacingDirection = 1;
+        else
+            FacingDirection = -1;
     }
 
     // 미구현-----------------------------------------------------------------------------
