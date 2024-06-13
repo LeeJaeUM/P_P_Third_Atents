@@ -197,8 +197,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 226b1a186e5c8c148ac8bb628a358d0a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxHealth: 100
-  currentHealth: 100
+  maxHealth: 10000
+  currentHealth: 1000
   attackPower: 10
   state: 4
   walkSpeed: 2
@@ -217,12 +217,10 @@ MonoBehaviour:
   isAttacking: 0
   timeAttackElaped: 1
   findTime: 5
-  player: {fileID: 0}
   chaseDis: 7
   testATKsinceTIme: 0
   testRayYMulti: 0.5
   lastX: 0
-  spriteRenderer: {fileID: 0}
 --- !u!4 &3300832963920586838 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8854639073985587606, guid: 2e3a4dc2e664d394b87cfb81dc37d5ba, type: 3}

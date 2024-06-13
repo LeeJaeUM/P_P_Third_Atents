@@ -14,6 +14,7 @@ public class PlayerController : CharacterBase
 
     [SerializeField] private bool grounded = false; // 땅에 닿아 있는지 여부
     [SerializeField] private bool isRolling = false; // 구르는 중인지 여부
+    // [SerializeField] private bool isJumping = false; // 점프 중인지 여부 //후에 점프 조절기능 추가때 사용
 
     //방향처리-------------
     private int facingDirection = 1;                // 캐릭터가 바라보는 방향
@@ -24,6 +25,8 @@ public class PlayerController : CharacterBase
     private float timeSinceAttack = 0.0f;           // 마지막 공격 이후 경과 시간
     private float attackDelay = 0.25f;              // 공격 대기 시간
     private float attackForce = 2.0f;               // 공격 시 앞으로 나갈 거리
+    private float airAttackForce = 3.0f;               // 공격 시 앞으로 나갈 거리
+    //[SerializeField] private bool isAirAttackable = true;
     public Action onAttack;
 
     [Header("Roll")]
@@ -63,11 +66,14 @@ public class PlayerController : CharacterBase
                         rigid.gravityScale = defaultGravityScale;
                         break;
                     case Enums.ActiveState.Active:
-                        //rigid.velocity = Vector2.zero;
+                        rigid.velocity = Vector2.zero;
                         rigid.gravityScale = defaultGravityScale;
                         break;
                     case Enums.ActiveState.NoGravity:
                         rigid.velocity = Vector2.zero;
+                        rigid.gravityScale = 0;
+                        break;
+                    case Enums.ActiveState.Roll:
                         rigid.gravityScale = 0;
                         break;
                 }
@@ -86,6 +92,8 @@ public class PlayerController : CharacterBase
     readonly int AnimState_Hash = Animator.StringToHash("AnimState");
     readonly int IdleBlock_Hash = Animator.StringToHash("IdleBlock");
     readonly int Parry_Hash = Animator.StringToHash("Parry");
+    readonly int Hurt_Hash = Animator.StringToHash("Hurt");
+    readonly int Block_Hash = Animator.StringToHash("Block");
 
     private Animator animator;                      // 애니메이터
     private Rigidbody2D rigid;                      // 리지드바디
@@ -131,6 +139,7 @@ public class PlayerController : CharacterBase
     // 방패 내리기 이벤트 처리
     private void OnBlockCanceled()
     {
+        State = Enums.ActiveState.None;
         isBlockAble = false;
         isParryAble = false;
         animator.SetBool(IdleBlock_Hash, false);
@@ -142,6 +151,7 @@ public class PlayerController : CharacterBase
         if (!isRolling)
         {
             //animator.SetTrigger(Block_Hash);
+            State = Enums.ActiveState.Active;
             isBlockAble = true;
             isParryAble = true;
             animator.SetBool(IdleBlock_Hash, true);
@@ -155,7 +165,6 @@ public class PlayerController : CharacterBase
         {
             isRolling = true;
             animator.SetTrigger(Roll_Hash);
-            State = Enums.ActiveState.NoGravity;
             StartCoroutine(Rolling());
         }
     }
@@ -166,10 +175,30 @@ public class PlayerController : CharacterBase
         if (timeSinceAttack > attackDelay && !isRolling)
         {
             currentAttack++;
-            if (currentAttack > 3)
-                currentAttack = 1;
+
+            //연속공격 가능 시간이 지나면 공격 인덱스 초기화
             if (timeSinceAttack > 1.0f)
                 currentAttack = 1;
+
+            if (grounded)
+            {
+                if (currentAttack > 3)
+                {
+                    //공격 인덱스가 최대(현재 3) 일때 땅에 있다면 초기화해서 연속공격가능
+                    currentAttack = 1;
+                }
+            }
+            //공중공격이었다면
+            else
+            {
+                if (currentAttack > 4)
+                {
+                    //공중에서 공격 인덱스가 최대(현재 4) 일때 더 이상 공격 불가
+                    return;
+                }
+            }
+            
+
             animator.SetTrigger("Attack" + currentAttack);
             timeSinceAttack = 0.0f;
 
@@ -185,6 +214,9 @@ public class PlayerController : CharacterBase
     {
         if (grounded)
         {
+            //점프 시 공격 인덱스 초기화
+            currentAttack = 0;
+
             animator.SetTrigger(Jump_Hash);
             grounded = false;
             animator.SetBool(IsGround_Hash, grounded);
@@ -236,8 +268,6 @@ public class PlayerController : CharacterBase
     // 업데이트
     private void Update()
     {
-        curGravityScale = rigid.gravityScale;
-
         //핸들러의 인풋값 받음 // 인풋액션 함수로 이동
         //inputDirection = inputHandler.InputDirection;
 
@@ -267,7 +297,7 @@ public class PlayerController : CharacterBase
     //----------------------------- 물리 업데이트-------------------------------------------------------------------------------------__________________---------------------
     private void FixedUpdate()
     {
-        switch (state)
+        switch (State)
         {
             case Enums.ActiveState.None:
                 rigid.velocity = new Vector2(inputDirection.x * speed, rigid.velocity.y);
@@ -275,6 +305,9 @@ public class PlayerController : CharacterBase
             case Enums.ActiveState.Active:
                 break;
             case Enums.ActiveState.NoGravity:
+                break;
+            case Enums.ActiveState.Roll:
+                rigid.velocity = new Vector2(facingDirection * rollForce, rigid.velocity.y);
                 break;
             default: // 기본 물리적용
                 rigid.velocity = new Vector2(inputDirection.x * speed, rigid.velocity.y);
@@ -287,11 +320,11 @@ public class PlayerController : CharacterBase
     // 구르기 코루틴
     IEnumerator Rolling()
     {
+        State = Enums.ActiveState.Roll;
         float temp = 0;
         while (temp < rollDuration)
         {
             temp += Time.deltaTime;
-            rigid.velocity = new Vector2(facingDirection * rollForce, rigid.velocity.y);
             yield return null;
         }
         isRolling = false;
@@ -316,7 +349,11 @@ public class PlayerController : CharacterBase
     IEnumerator Attacking_Physics()
     {
         State = Enums.ActiveState.Active;
-        rigid.velocity = new Vector2(attackForce * facingDirection, rigid.velocity.y);
+        if (grounded)
+        {
+            if (inputDirection != Vector2.zero)
+                rigid.velocity = new Vector2(attackForce * facingDirection, rigid.velocity.y);
+        }
         yield return new WaitForSeconds(attackDelay);
         State = Enums.ActiveState.None;
     }
@@ -326,10 +363,13 @@ public class PlayerController : CharacterBase
         base.Attack(target);
 
         //공격에 성공하면 전진거리의 절반만큼 뒤로 물러남
-        rigid.velocity = new Vector2(attackForce * -facingDirection * 0.5f, rigid.velocity.y);
+        if(grounded)
+            rigid.velocity = new Vector2(attackForce * -facingDirection * 0.5f, rigid.velocity.y);
+        else
+            rigid.velocity = new Vector2(rigid.velocity.x, airAttackForce);
     }
 
-    #region 가드패리 함수 OnBlockInput, ontriggerEnter에서 사용
+    #region 가드패리 함수 
 
     /// <summary>
     /// 데미지를 입는 순간에 블록 or 패리 or 피격인지 판단
@@ -344,22 +384,38 @@ public class PlayerController : CharacterBase
             ParryTimerReset();
 
             // 패링 시 느려짐 효과 테스트
-            StartCoroutine(TimeSlow());
+            //StartCoroutine(TimeSlow());
 
+            StartCoroutine(TakeDamageActive());
             Debug.Log("패리성공");
         }
         else if (isBlockAble)
         {
             CurrentHealth -= (damage * blockMultiplier);
+
+            animator.SetTrigger(Block_Hash);
             BlockComplete();
+
+            StartCoroutine(TakeDamageActive());
             Debug.Log("가드로 막음");
         }
         else
         {
             CurrentHealth -= damage;
+
+            animator.SetTrigger(Hurt_Hash);
             ParryTimerReset();
+
+            StartCoroutine(TakeDamageActive());
             Debug.Log("그냥 맞아버림");
         }
+    }
+
+    private IEnumerator TakeDamageActive()
+    {
+        State = Enums.ActiveState.Active;
+        yield return new WaitForSeconds(0.02f);
+        State = Enums.ActiveState.None;
     }
 
     void ParryTimer()   //패리 가능한 시간 계산 함수

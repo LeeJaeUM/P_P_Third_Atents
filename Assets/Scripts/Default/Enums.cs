@@ -8,6 +8,7 @@ public class Enums
     {
         None = 0,
         Active,
-        NoGravity
+        NoGravity,
+        Roll
     }
 }
