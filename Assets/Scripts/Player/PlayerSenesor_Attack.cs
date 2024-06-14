@@ -11,6 +11,9 @@ public class PlayerSenesor_Attack : MonoBehaviour
     private float offsetX = 0;
     private float offsetY = 0;
 
+    private float curOnTime = 0;
+    private float offTime = 2;
+
     private void Awake()
     {
         controller = GetComponentInParent<PlayerController>();
@@ -27,6 +30,18 @@ public class PlayerSenesor_Attack : MonoBehaviour
     private void Update()
     {
         attackRangeCol.offset = new Vector2(offsetX * controller.FacingDirection, offsetY);
+
+        //공격범위가 꺼지지 않았을떄를 대비한 비활성화 조건 추가
+        if (attackRangeCol.enabled)
+        {
+            curOnTime += Time.deltaTime;
+        }
+
+        if (curOnTime > offTime)
+        {
+            attackRangeCol.enabled = false;
+            curOnTime = 0;
+        }
     }
 
     private void OnTriggerEnter2D(Collider2D collision)

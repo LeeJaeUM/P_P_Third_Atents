@@ -11,6 +11,7 @@ public class PlayerInputHandler : MonoBehaviour
     public event System.Action OnRollPressed;
     public event System.Action OnBlockPressed;
     public event System.Action OnBlockReleased;
+    public event System.Action OnSkillPressed;
 
     private PlayerInputActions inputActions;
 
@@ -29,10 +30,12 @@ public class PlayerInputHandler : MonoBehaviour
         inputActions.Player.Roll.performed += context => OnRollPressed?.Invoke();
         inputActions.Player.Block.performed += context => OnBlockPressed?.Invoke();
         inputActions.Player.Block.canceled += context => OnBlockReleased?.Invoke();
+        inputActions.Player.Skill.performed += context => OnSkillPressed?.Invoke();
     }
 
     private void OnDisable()
     {
+        inputActions.Player.Skill.performed -= context => OnSkillPressed?.Invoke();
         inputActions.Player.Block.canceled -= context => OnBlockReleased?.Invoke();
         inputActions.Player.Block.performed -= context => OnBlockPressed?.Invoke();
         inputActions.Player.Roll.performed -= context => OnRollPressed?.Invoke();

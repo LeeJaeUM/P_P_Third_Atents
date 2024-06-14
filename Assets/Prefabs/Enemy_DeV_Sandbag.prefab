@@ -104,6 +104,10 @@ PrefabInstance:
       propertyPath: m_Controller
       value: 
       objectReference: {fileID: 22100000, guid: 83521cb3fa2b73e4ea58f03cbe0f8c10, type: 2}
+    - target: {fileID: 3135564396408176007, guid: 2e3a4dc2e664d394b87cfb81dc37d5ba, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.55
+      objectReference: {fileID: 0}
     - target: {fileID: 3527190584161322262, guid: 2e3a4dc2e664d394b87cfb81dc37d5ba, type: 3}
       propertyPath: m_BodyType
       value: 2
@@ -124,6 +128,22 @@ PrefabInstance:
       propertyPath: m_Sprite
       value: 
       objectReference: {fileID: 21300000, guid: 2e6c748676ae74a48a1f82fdcbfebf24, type: 3}
+    - target: {fileID: 6114235378718557267, guid: 2e3a4dc2e664d394b87cfb81dc37d5ba, type: 3}
+      propertyPath: m_Size.x
+      value: 4.98942
+      objectReference: {fileID: 0}
+    - target: {fileID: 6114235378718557267, guid: 2e3a4dc2e664d394b87cfb81dc37d5ba, type: 3}
+      propertyPath: m_Size.y
+      value: 1.5885245
+      objectReference: {fileID: 0}
+    - target: {fileID: 6114235378718557267, guid: 2e3a4dc2e664d394b87cfb81dc37d5ba, type: 3}
+      propertyPath: m_Offset.x
+      value: 1.9417024
+      objectReference: {fileID: 0}
+    - target: {fileID: 6114235378718557267, guid: 2e3a4dc2e664d394b87cfb81dc37d5ba, type: 3}
+      propertyPath: m_Offset.y
+      value: -0.10073763
+      objectReference: {fileID: 0}
     - target: {fileID: 8490913845304357038, guid: 2e3a4dc2e664d394b87cfb81dc37d5ba, type: 3}
       propertyPath: m_Name
       value: Enemy_DeV_Sandbag
@@ -211,11 +231,14 @@ MonoBehaviour:
   facingDirection: 1
   stoppingDistance: 1.8
   currentAttack: 0
-  attackDelay: 1.5
+  curAttackDelay: 1.5
+  defaultAttackDelay: 1.5
   attackForce: 2
   attackDistance: 3
   isAttacking: 0
-  timeAttackElaped: 1
+  curTimeAttackElaped: 1
+  defaultTimeAttackElaped: 1
+  curAnimSpeedMultiplier: 2
   findTime: 5
   chaseDis: 7
   testATKsinceTIme: 0

@@ -13,8 +13,8 @@ public class Enemy_Plant : EnemyController
     {
         base.Awake();
 
-        timeAttackElaped = 1.6f;
-        attackDelay = 2.0f;
+        curTimeAttackElaped = 1.6f;
+        curAttackDelay = 2.0f;
 
         attackSpriteRenderer = transform.GetChild(3).GetComponent<SpriteRenderer>();
     }
@@ -34,7 +34,7 @@ public class Enemy_Plant : EnemyController
         attackSpriteRenderer.enabled = true;
         isAttacking = true;
         rigid.velocity = new Vector2(attackForce * FacingDirection, rigid.velocity.y);
-        yield return new WaitForSeconds(timeAttackElaped);
+        yield return new WaitForSeconds(curTimeAttackElaped);
         isAttacking = false;
     }
 

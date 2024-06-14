@@ -71,12 +71,15 @@ public class EnemyController : CharacterBase
     /// <summary>
     /// 이동 속도(배회 및 찾기 상태에서 사용)
     /// </summary>
-    public float walkSpeed = 2.0f;
+    public float curWalkSpeed = 2.0f;
+    public float defaultWalkSpeed = 2.0f;
+    
 
     /// <summary>
     /// 이동 속도(추적 및 공격 상태에서 사용)
     /// </summary>
-    public float runSpeed = 3.0f;
+    public float curRunSpeed = 3.0f;
+    public float defaultRunSpeed = 3.0f;
 
     // Patrol(순찰) 관련
     [Header("Patrol")]
@@ -122,13 +125,17 @@ public class EnemyController : CharacterBase
     [Header("Attack")]
     [SerializeField] protected int currentAttack = 0;         // 현재 공격 단계
     protected float timeSinceAttack = 0.0f;                   // 마지막 공격 이후 경과 시간
-    [SerializeField] protected float attackDelay = 1.5f;      // 공격 대기 시간
+    [SerializeField] protected float curAttackDelay = 1.5f;      // 공격 대기 시간
+    [SerializeField] protected float defaultAttackDelay = 1.5f;      // 공격 대기 시간
     [SerializeField] protected float attackForce = 2.0f;      // 공격 시 앞으로 나갈 거리
     public float attackDistance = 3.0f;                     // 공격 가능 거리
     public Action onAttack;
     public Action onExitAttackState;
     [SerializeField] protected bool isAttacking = false;      // 공격중인지 판단하는 변수
-    [SerializeField] protected float timeAttackElaped = 1f;      // 공격중인지 판단하는 변수
+    [SerializeField] protected float curTimeAttackElaped = 1f;      // 공격중인지 판단하는 변수
+    [SerializeField] protected float defaultTimeAttackElaped = 1f;      // 공격중인지 판단하는 변수
+
+    [SerializeField] private float curAnimSpeedMultiplier = 0.5f;      // 공격중인지 판단하는 변수
 
     // 탐색 관련 -------------------------------------------------------------------------------------------
     [Header("Find")]
@@ -159,6 +166,7 @@ public class EnemyController : CharacterBase
     protected Rigidbody2D rigid;
     protected Animator animator;
     private SpriteRenderer spriteRenderer;
+    private AnimationManager animationManager;
 
     // UnityEvent Functions--------------------------------------------------------------------------------------------------------
     #region UnityEvent Functions
@@ -198,6 +206,9 @@ public class EnemyController : CharacterBase
         State = BehaviorState.Patrol;
 
         player = GameManager.Instance.Player;
+
+        animationManager = GameManager.Instance.AnimationManager;
+        animationManager.onAnimSlow += AttackVariableChange;
     }
 
     private void OnEnable()
@@ -222,7 +233,7 @@ public class EnemyController : CharacterBase
         {
             if (transform.position.x < rightPatrol)
             {
-                rigid.velocity = new Vector2(walkSpeed * facingDirection, rigid.velocity.y);
+                rigid.velocity = new Vector2(curWalkSpeed * facingDirection, rigid.velocity.y);
             }
             else
             {
@@ -234,7 +245,7 @@ public class EnemyController : CharacterBase
         {
             if (transform.position.x > leftPatrol)
             {
-                rigid.velocity = new Vector2(walkSpeed * facingDirection, rigid.velocity.y);
+                rigid.velocity = new Vector2(curWalkSpeed * facingDirection, rigid.velocity.y);
             }
             else
             {
@@ -295,7 +306,7 @@ public class EnemyController : CharacterBase
         else
         {
             // 공격 로직
-            if (timeSinceAttack > attackDelay)
+            if (timeSinceAttack > curAttackDelay)
             {
                 AttackTry();
             }
@@ -444,7 +455,7 @@ public class EnemyController : CharacterBase
         targetPosition = new Vector3(targetPosition.x, 0, 0);
         Vector3 myPosition = new Vector3(transform.position.x, 0, 0);
         Vector2 direction = (targetPosition - myPosition).normalized;
-        rigid.velocity = direction * runSpeed;
+        rigid.velocity = direction * curRunSpeed;
     }
 
     /// <summary>
@@ -493,12 +504,12 @@ public class EnemyController : CharacterBase
     {
         isAttacking = true;
         rigid.velocity = new Vector2(attackForce * facingDirection, rigid.velocity.y);
-        yield return new WaitForSeconds(timeAttackElaped);
+        yield return new WaitForSeconds(curTimeAttackElaped);
         isAttacking = false;
     }
 
     /// <summary>
-    /// 공격 범위 활성화 델리게이트 전송 함수
+    /// 공격 범위 활성화 델리게이트 전송 함수. 애니메이션 이벤트로 사용
     /// </summary>
     protected virtual void DoAttack()
     {
@@ -506,6 +517,10 @@ public class EnemyController : CharacterBase
         onAttack?.Invoke();
     }
 
+
+    /// <summary>
+    /// 공격 상태에서 플레이어를 바라보는 함수
+    /// </summary>
     private void SetFacingDirection()
     {
         if (transform.position.x < player.transform.position.x)
@@ -514,6 +529,49 @@ public class EnemyController : CharacterBase
             FacingDirection = -1;
     }
 
+    /// <summary>
+    /// AniamationManager에서 속도을 느리게 하면 공격관련, 이동속도 변수를 느리게 하는 변수
+    /// </summary>
+    /// <param name="isSlow">델리게이트로 받은 값. true면 느려지고, false면 정상으로 돌아온다</param>
+    private void AttackVariableChange(bool isSlow)
+    {
+        curAnimSpeedMultiplier = GetInverse(animationManager.SpeedMultiplier);
+        if (isSlow)
+        {
+            //딜레이는 늘어나고 속도는 줄어들게 함
+            curAttackDelay *= curAnimSpeedMultiplier;
+            curTimeAttackElaped *= curAnimSpeedMultiplier;
+
+            curWalkSpeed *= animationManager.SpeedMultiplier;
+            curRunSpeed *= animationManager.SpeedMultiplier;
+        }
+        else
+        {
+            curAttackDelay = defaultAttackDelay;
+            curTimeAttackElaped = defaultTimeAttackElaped;
+
+            curWalkSpeed = defaultWalkSpeed;
+            curRunSpeed = defaultRunSpeed;
+        }
+        
+    }
+
+    /// <summary>
+    /// 받은 값의 역수를 반환하는 함수
+    /// </summary>
+    /// <param name="value">float 0.25일때 리턴은 4</param>
+    /// <returns>float 0.25일때 리턴은 4</returns>
+    public float GetInverse(float value)
+    {
+        if (value == 0)
+        {
+            Debug.LogError("0은 역수를 가질 수 없습니다.");
+            return float.NaN; // Not a Number를 반환하여 오류 표시
+        }
+
+        float result = 1 / value;
+        return Mathf.Round(result * 100f) / 100f; // 소수점 두 자리로 반올림
+    }
 
     // 미구현-----------------------------------------------------------------------------
     // ---------------------미구현--------------------------------------------------------

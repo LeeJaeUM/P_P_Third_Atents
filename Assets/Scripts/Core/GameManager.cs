@@ -14,4 +14,16 @@ public class GameManager : Singleton<GameManager>
             return player;
         }
     }
+
+
+    AnimationManager animationManager;
+    public AnimationManager AnimationManager
+    {
+        get
+        {
+            if(animationManager == null)
+                animationManager = FindAnyObjectByType<AnimationManager>();
+            return animationManager;
+        }
+    }
 }

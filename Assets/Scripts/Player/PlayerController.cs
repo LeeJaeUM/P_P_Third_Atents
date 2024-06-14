@@ -30,12 +30,15 @@ public class PlayerController : CharacterBase
     private float airAttackForce = 3.0f;               // 공격 시 앞으로 나갈 거리
     //[SerializeField] private bool isAirAttackable = true;
     public Action onAttack;
+    private bool isAttacking = false;
 
-    [Header("Roll")]
+    [Header("Rolling")]
     //private float delayToIdle = 0.05f;              // 대기 상태로 전환 대기 시간
-    private float rollDuration = 0.25f;             // 구르기 지속 시간
+    private float rollDuration = 0.4f;             // 구르기 지속 시간
     [SerializeField] private float rollDelay = 1.0f;
     private float timeSinceRoll = 0.0f;             // 구르기 가능 시간 판단 변수
+    public string dodgeLayerName = "Dodge";
+    public string playerLayerName = "Player";
 
     [Header("Block")]
     [SerializeField] private float blockMultiplier = 0.5f;
@@ -61,6 +64,18 @@ public class PlayerController : CharacterBase
         {
             if(state != value)
             {
+                //스테이트를 바꾸기 전 현재 스테이트
+                switch (state)
+                {
+                    case Enums.ActiveState.None:
+                        break;
+                    case Enums.ActiveState.Active:
+                        break;
+                    case Enums.ActiveState.NoGravity:
+                        break;
+                    case Enums.ActiveState.Roll:
+                        break;
+                }
                 state = value;
                 switch(value)
                 {
@@ -68,6 +83,7 @@ public class PlayerController : CharacterBase
                         rigid.gravityScale = defaultGravityScale;
                         break;
                     case Enums.ActiveState.Active:
+                        rigid.velocity = Vector2.zero;
                         rigid.gravityScale = defaultGravityScale;
                         break;
                     case Enums.ActiveState.NoGravity:
@@ -101,6 +117,7 @@ public class PlayerController : CharacterBase
     private PlayerSensor_Ground groundSensor;         // 지면 감지 센서
     private SpriteRenderer spriteRenderer;          // 스프라이트 렌더러
     private PlayerInputHandler inputHandler;        // 플레이어 입력 핸들러
+    private AnimationManager animationManager;
     #endregion
 
     private void Awake()
@@ -121,10 +138,13 @@ public class PlayerController : CharacterBase
         inputHandler.OnRollPressed += OnRoll;        // 구르기 이벤트 등록
         inputHandler.OnBlockPressed += OnBlockPerformed;  // 방패 들기 이벤트 등록
         inputHandler.OnBlockReleased += OnBlockCanceled;  // 방패 내리기 이벤트 등록
+        inputHandler.OnSkillPressed += OnSkill;
     }
+
 
     private void OnDisable()
     {
+        inputHandler.OnSkillPressed -= OnSkill;
         inputHandler.OnMove -= OnMove;              // 이동 이벤트 해제
         inputHandler.OnStop -= OnStop;              // 멈춤 이벤트 해제
         inputHandler.OnJumpPressed -= OnJump;        // 점프 이벤트 해제
@@ -136,6 +156,11 @@ public class PlayerController : CharacterBase
 
     #region InputActions
 
+    //스킬 사용
+    private void OnSkill()
+    {
+        animationManager.AnimSlowCo();
+    }
 
     // 방패 내리기 이벤트 처리
     private void OnBlockCanceled()
@@ -267,6 +292,7 @@ public class PlayerController : CharacterBase
         animator = GetComponent<Animator>();
         rigid = GetComponent<Rigidbody2D>();
         groundSensor = transform.GetChild(0).GetComponent<PlayerSensor_Ground>();
+        animationManager = GameManager.Instance.AnimationManager;
     }
 
     // 업데이트
@@ -327,6 +353,7 @@ public class PlayerController : CharacterBase
     IEnumerator Rolling()
     {
         State = Enums.ActiveState.Roll;
+        ChangeLayer(gameObject, dodgeLayerName);
         float temp = 0;
         while (temp < rollDuration)
         {
@@ -345,6 +372,7 @@ public class PlayerController : CharacterBase
             facingDirection = -1;
         }
         State = Enums.ActiveState.None;
+        ChangeLayer(gameObject, playerLayerName);
         timeSinceRoll = 0;
     }
 
@@ -358,7 +386,9 @@ public class PlayerController : CharacterBase
         if (grounded)
         {
             if (inputDirection != Vector2.zero)
+            {
                 rigid.velocity = new Vector2(attackForce * facingDirection, rigid.velocity.y);
+            }
         }
         yield return new WaitForSeconds(attackDelay);
         State = Enums.ActiveState.None;
@@ -451,6 +481,23 @@ public class PlayerController : CharacterBase
         Time.timeScale = 0.6f;
         yield return new WaitForSeconds(0.7f);
         Time.timeScale = 1.0f;
+    }
+
+    /// <summary>
+    /// 레이어를 변경하는 함수 ChangeLayer(gameObject, targetLayerName);
+    /// </summary>
+    /// <param name="obj">레이어를 바꿀 게임 오브젝트</param>
+    /// <param name="layerName">string변수 레이어명</param>
+    private void ChangeLayer(GameObject obj, string layerName)
+    {
+        int layer = LayerMask.NameToLayer(layerName);
+        if (layer == -1)
+        {
+            Debug.LogError("지정한 레이어 이름이 존재하지 않습니다: " + layerName);
+            return;
+        }
+
+        obj.layer = layer;
     }
 
 #if UNITY_EDITOR
