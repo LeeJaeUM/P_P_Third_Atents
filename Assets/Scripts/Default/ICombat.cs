@@ -11,7 +11,7 @@ public class ICombat
 
     public interface IDamage
     {
-        void TakeDamage(float damage);
+        void TakeDamage(float damage, float xPos);
     }
     public interface IHealth
     {

@@ -219,7 +219,7 @@ Animator:
   m_GameObject: {fileID: 8949961089330589075}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: acdba0857c34765438e4f768edf5122c, type: 2}
+  m_Controller: {fileID: 9100000, guid: 80e91b2e645166443bf2305dfb0ebc9a, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -369,13 +369,20 @@ MonoBehaviour:
   maxHealth: 1000
   currentHealth: 0
   attackPower: 10
-  speed: 4
-  jumpForce: 7.5
+  moveSpeed: 4
+  slowMoveSpeed: 0.5
+  curMoveSpeed: 4
+  jumpForce: 8
   rollForce: 12
   grounded: 0
   isRolling: 0
   currentAttack: 0
   rollDelay: 1
+  blockMultiplier: 0.5
+  isParryAble: 0
+  isBlockAble: 0
+  parryTime_origin: 2
+  parryTime_cur: 0
   curGravityScale: 0
   isFirstCheck: 0
   state: 0

@@ -34,15 +34,43 @@ public class CharacterBase : MonoBehaviour, ICombat.IAttack, ICombat.IDamage, IC
     // 공격 함수
     public virtual void Attack(ICombat.IDamage target)
     {
-        // 공격 로직 구현
-        target.TakeDamage(attackPower * damageMultiplier);
+        // 공격 로직 구현 // 현재 공격자의 X위치도 포함
+        target.TakeDamage(attackPower * damageMultiplier, transform.position.x);
     }
 
     // 피해 받기 함수
-    public virtual void TakeDamage(float damage)
+    public virtual void TakeDamage(float damage, float xPos)
     {
         // 피해 로직 구현
         CurrentHealth -= damage;
+    }
+
+    /// <summary>
+    /// 피격 X위치 판단 함수
+    /// </summary>
+    /// <param name="facingDir">현재 피격자가 바라보는 방향 1 = 오른쪽, -1 은 왼쪽</param>
+    /// <param name="xPos">공격자의 위치</param>
+    /// <returns>피격 위치가 정면이면 true, 후방이면 false </returns>
+    protected bool HitPosCheck(int facingDir, float xPos)
+    {
+        if(facingDir == 1)
+        {
+            if(xPos > transform.position.x)
+            {
+                return true;
+            }
+            else
+                return false;
+        }
+        else
+        {
+            if (xPos > transform.position.x)
+            {
+                return false;
+            }
+            else
+                return true;
+        }
     }
 
     public virtual void Die()

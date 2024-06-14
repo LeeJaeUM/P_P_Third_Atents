@@ -9,7 +9,7 @@ public class PlayerController : CharacterBase
 {
     [Header("Move Check")]
     [SerializeField] private float moveSpeed = 4.0f;         // 이동 속도
-    [SerializeField] private float slowMoveSpeed = 1.0f;         // 이동 속도
+    [SerializeField] private float slowMoveSpeed = 0.5f;         // 이동 속도
     [SerializeField] private float curMoveSpeed = 4.0f;         // 이동 속도
     [SerializeField] private float jumpForce = 7.5f;         // 점프 힘
     [SerializeField] private float rollForce = 6.0f;         // 구르기 힘
@@ -381,9 +381,10 @@ public class PlayerController : CharacterBase
     /// 데미지를 입는 순간에 블록 or 패리 or 피격인지 판단
     /// </summary>
     /// <param name="damage"></param>
-    public override void TakeDamage(float damage)
+    public override void TakeDamage(float damage, float xPos)
     {
-        if (isParryAble)
+        // isParryAble가 false면 함수는 실행 안함
+        if (isParryAble && HitPosCheck(facingDirection, xPos))
         {
             onParry?.Invoke();
             animator.SetTrigger(Parry_Hash);
@@ -395,7 +396,7 @@ public class PlayerController : CharacterBase
             StartCoroutine(TakeDamageActive());
             Debug.Log("패리성공");
         }
-        else if (isBlockAble)
+        else if (isBlockAble && HitPosCheck(facingDirection, xPos))
         {
             CurrentHealth -= (damage * blockMultiplier);
 

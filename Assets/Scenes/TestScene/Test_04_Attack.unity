@@ -1688,10 +1688,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 319729751127303397, guid: c0932c77a4bc2f2418f4359634e2f563, type: 3}
-      propertyPath: jumpForce
-      value: 8
-      objectReference: {fileID: 0}
     - target: {fileID: 6770966057145141651, guid: c0932c77a4bc2f2418f4359634e2f563, type: 3}
       propertyPath: m_LocalPosition.x
       value: -7.4
@@ -1732,10 +1728,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 7422254650131869313, guid: c0932c77a4bc2f2418f4359634e2f563, type: 3}
-      propertyPath: m_Controller
-      value: 
-      objectReference: {fileID: 9100000, guid: 80e91b2e645166443bf2305dfb0ebc9a, type: 2}
     - target: {fileID: 8949961089330589075, guid: c0932c77a4bc2f2418f4359634e2f563, type: 3}
       propertyPath: m_Name
       value: Player
