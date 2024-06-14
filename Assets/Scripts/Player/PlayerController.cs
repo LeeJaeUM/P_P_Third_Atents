@@ -8,7 +8,9 @@ using static ICombat;
 public class PlayerController : CharacterBase
 {
     [Header("Move Check")]
-    [SerializeField] private float speed = 4.0f;             // 이동 속도
+    [SerializeField] private float moveSpeed = 4.0f;         // 이동 속도
+    [SerializeField] private float slowMoveSpeed = 1.0f;         // 이동 속도
+    [SerializeField] private float curMoveSpeed = 4.0f;         // 이동 속도
     [SerializeField] private float jumpForce = 7.5f;         // 점프 힘
     [SerializeField] private float rollForce = 6.0f;         // 구르기 힘
 
@@ -66,7 +68,6 @@ public class PlayerController : CharacterBase
                         rigid.gravityScale = defaultGravityScale;
                         break;
                     case Enums.ActiveState.Active:
-                        rigid.velocity = Vector2.zero;
                         rigid.gravityScale = defaultGravityScale;
                         break;
                     case Enums.ActiveState.NoGravity:
@@ -141,6 +142,7 @@ public class PlayerController : CharacterBase
     {
         State = Enums.ActiveState.None;
         isBlockAble = false;
+        curMoveSpeed = moveSpeed;
         isParryAble = false;
         animator.SetBool(IdleBlock_Hash, false);
     }
@@ -153,8 +155,10 @@ public class PlayerController : CharacterBase
             //animator.SetTrigger(Block_Hash);
             State = Enums.ActiveState.Active;
             isBlockAble = true;
+            curMoveSpeed = slowMoveSpeed;
             isParryAble = true;
             animator.SetBool(IdleBlock_Hash, true);
+            animator.SetTrigger(Block_Hash);
         }
     }
 
@@ -228,7 +232,7 @@ public class PlayerController : CharacterBase
     // 이동 이벤트 처리
     private void OnMove()
     {
-        animator.SetInteger(AnimState_Hash, 1);
+        animator.SetFloat(AnimState_Hash, 1);
         inputDirection = inputHandler.InputDirection;
 
         if (!isRolling)
@@ -252,7 +256,7 @@ public class PlayerController : CharacterBase
     private void OnStop()
     {
         inputDirection = Vector2.zero;
-        animator.SetInteger(AnimState_Hash, 0);
+        animator.SetFloat(AnimState_Hash, 0);
     }
 
     #endregion
@@ -268,6 +272,8 @@ public class PlayerController : CharacterBase
     // 업데이트
     private void Update()
     {
+        
+
         //핸들러의 인풋값 받음 // 인풋액션 함수로 이동
         //inputDirection = inputHandler.InputDirection;
 
@@ -300,7 +306,7 @@ public class PlayerController : CharacterBase
         switch (State)
         {
             case Enums.ActiveState.None:
-                rigid.velocity = new Vector2(inputDirection.x * speed, rigid.velocity.y);
+                rigid.velocity = new Vector2(inputDirection.x * curMoveSpeed, rigid.velocity.y);
                 break;
             case Enums.ActiveState.Active:
                 break;
@@ -310,7 +316,7 @@ public class PlayerController : CharacterBase
                 rigid.velocity = new Vector2(facingDirection * rollForce, rigid.velocity.y);
                 break;
             default: // 기본 물리적용
-                rigid.velocity = new Vector2(inputDirection.x * speed, rigid.velocity.y);
+                rigid.velocity = new Vector2(inputDirection.x * curMoveSpeed, rigid.velocity.y);
                 break;
         }
         //if (!isRolling)
