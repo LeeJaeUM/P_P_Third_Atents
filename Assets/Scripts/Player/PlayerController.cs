@@ -93,7 +93,7 @@ public class PlayerController : CharacterBase
 
 
     // 이동제한 및 움직임 스테이트
-    [SerializeField] private Enums.ActiveState state = Enums.ActiveState.None;
+    [SerializeField] private Enums.ActiveState state = Enums.ActiveState.Default;
     public Enums.ActiveState State
     {
         get => state;
@@ -118,11 +118,15 @@ public class PlayerController : CharacterBase
     {
         switch (oldState)
         {
-            case Enums.ActiveState.None:
+            case Enums.ActiveState.Default:
                 break;
             case Enums.ActiveState.Active:
                 break;
             case Enums.ActiveState.Roll:
+                ChangeLayer(gameObject, playerLayerName);
+                break;
+            case Enums.ActiveState.NoMoveInput:
+                OnEnable();
                 break;
         }
     }
@@ -135,7 +139,7 @@ public class PlayerController : CharacterBase
     {
         switch (newState)
         {
-            case Enums.ActiveState.None:
+            case Enums.ActiveState.Default:
                 rigid.gravityScale = defaultGravityScale;
                 break;
             case Enums.ActiveState.Active:
@@ -143,7 +147,11 @@ public class PlayerController : CharacterBase
                 rigid.gravityScale = defaultGravityScale;
                 break;
             case Enums.ActiveState.Roll:
+                ChangeLayer(gameObject, dodgeLayerName);
                 rigid.gravityScale = 0;
+                break;
+            case Enums.ActiveState.NoMoveInput:
+                OnDisable();
                 break;
         }
     }
@@ -162,6 +170,7 @@ public class PlayerController : CharacterBase
     readonly int Hurt_Hash = Animator.StringToHash("Hurt");
     readonly int Block_Hash = Animator.StringToHash("Block");
     readonly int Death_Hash = Animator.StringToHash("Death");
+    readonly int DashAttack_Hash = Animator.StringToHash("DashAttack");
 
     private Animator animator;                      // 애니메이터
     private Rigidbody2D rigid;                      // 리지드바디
@@ -220,7 +229,7 @@ public class PlayerController : CharacterBase
     // 방패 내리기 이벤트 처리
     private void OnBlockCanceled()
     {
-        State = Enums.ActiveState.None;
+        State = Enums.ActiveState.Default;
         isBlockAble = false;
         curMoveSpeed = moveSpeed;
         isParryAble = false;
@@ -290,6 +299,14 @@ public class PlayerController : CharacterBase
             onAttack?.Invoke();
 
             StartCoroutine(Attacking_Physics());
+        }
+        else if (isRolling)
+        {
+            State = Enums.ActiveState.DashAttack;
+            animator.SetTrigger(DashAttack_Hash);
+            onAttack?.Invoke();
+            animator.ResetTrigger("Attack");
+            StartCoroutine (ReChangeState());
         }
     }
 
@@ -387,13 +404,18 @@ public class PlayerController : CharacterBase
     {
         switch (State)
         {
-            case Enums.ActiveState.None:
+            case Enums.ActiveState.Default:
                 rigid.velocity = new Vector2(inputDirection.x * curMoveSpeed, rigid.velocity.y);
                 break;
             case Enums.ActiveState.Active:
                 break;
             case Enums.ActiveState.Roll:
                 rigid.velocity = new Vector2(facingDirection * rollForce, rigid.velocity.y);
+                break;
+            case Enums.ActiveState.DashAttack:
+                rigid.velocity = new Vector2(facingDirection * rollForce * 0.6f, 0);
+                break;
+            case Enums.ActiveState.NoMoveInput:
                 break;
             default: // 기본 물리적용
                 rigid.velocity = new Vector2(inputDirection.x * curMoveSpeed, rigid.velocity.y);
@@ -407,7 +429,6 @@ public class PlayerController : CharacterBase
     IEnumerator Rolling()
     {
         State = Enums.ActiveState.Roll;
-        ChangeLayer(gameObject, dodgeLayerName);
         float temp = 0;
         while (temp < rollDuration)
         {
@@ -425,8 +446,7 @@ public class PlayerController : CharacterBase
             spriteRenderer.flipX = true;
             facingDirection = -1;
         }
-        State = Enums.ActiveState.None;
-        ChangeLayer(gameObject, playerLayerName);
+        State = Enums.ActiveState.Default;
         timeSinceRoll = 0;
     }
 
@@ -445,7 +465,8 @@ public class PlayerController : CharacterBase
             }
         }
         yield return new WaitForSeconds(attackDelay);
-        State = Enums.ActiveState.None;
+        if(State != Enums.ActiveState.Roll)
+            State = Enums.ActiveState.Default;
     }
 
     public override void Attack(IDamage target)
@@ -455,6 +476,7 @@ public class PlayerController : CharacterBase
         //공중공격에 성공하면 조금 위로 떠오름
         if(!grounded)
             rigid.velocity = new Vector2(rigid.velocity.x, airAttackForce);
+
         //else    //전진거리의 절반만큼 뒤로 물러남
           //  rigid.velocity = new Vector2(attackForce * -facingDirection * 0.5f, rigid.velocity.y);
     }
@@ -505,11 +527,15 @@ public class PlayerController : CharacterBase
         }
     }
 
+    /// <summary>
+    /// 잠시 움직임을 멈추는 코루틴 Active -> Default
+    /// </summary>
+    /// <returns></returns>
     private IEnumerator TakeDamageActive()
     {
         State = Enums.ActiveState.Active;
         yield return new WaitForSeconds(0.02f);
-        State = Enums.ActiveState.None;
+        State = Enums.ActiveState.Default;
     }
 
     void ParryTimer()   //패리 가능한 시간 계산 함수
@@ -560,6 +586,12 @@ public class PlayerController : CharacterBase
         }
 
         obj.layer = layer;
+    }
+
+    IEnumerator ReChangeState()
+    {
+        yield return new WaitForSeconds(0.3f);
+        State = Enums.ActiveState.Default;
     }
 
 #if UNITY_EDITOR

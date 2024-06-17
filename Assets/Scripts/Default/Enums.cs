@@ -6,9 +6,17 @@ public class Enums
 {
     public enum ActiveState
     {
-        None = 0,
+        Default = 0,
         Active,
-        NoGravity,
-        Roll
+        Roll,
+        DashAttack,
+        NoMoveInput
+    }
+
+    public enum ParryState
+    {
+        None = 0,
+        DashAttack,
+        SuperGuard
     }
 }

@@ -20,7 +20,7 @@ public class Test_02_Jump : TestBase
 
     protected override void OnTest2(InputAction.CallbackContext context)
     {
-        controller.State = Enums.ActiveState.None;
+        controller.State = Enums.ActiveState.Default;
     }
     protected override void OnTest3(InputAction.CallbackContext context)
     {
@@ -28,7 +28,7 @@ public class Test_02_Jump : TestBase
     }
     protected override void OnTest4(InputAction.CallbackContext context)
     {
-        controller.State = Enums.ActiveState.NoGravity;
+        controller.State = Enums.ActiveState.NoMoveInput;
     }
 
     protected override void OnTest5(InputAction.CallbackContext context)

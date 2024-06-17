@@ -66,6 +66,19 @@ public class EnemyController : CharacterBase
     /// </summary>
     Action onUpdate = null;
 
+    /// <summary>
+    /// 특수 패리 가능 상태
+    /// </summary>
+    [SerializeField] private Enums.ParryState parryState = Enums.ParryState.None;
+    public Enums.ParryState ParryState
+    {
+        get => parryState;
+        private set
+        {
+            parryState = value;
+        }
+    }
+
     // 이동 관련 ----------------------------------------------------------------------------------------
 
     /// <summary>
