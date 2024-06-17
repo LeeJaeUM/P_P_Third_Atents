@@ -1,7 +1,10 @@
 using System;
 using System.Collections;
 using UnityEngine;
+using UnityEngine.InputSystem.LowLevel;
+using static EnemyController;
 using static ICombat;
+using static UnityEngine.Rendering.DebugUI;
 
 // PlayerController 클래스는 플레이어 캐릭터의 동작을 제어합니다.
 [RequireComponent(typeof(PlayerInputHandler))]
@@ -65,39 +68,68 @@ public class PlayerController : CharacterBase
             if(state != value)
             {
                 //스테이트를 바꾸기 전 현재 스테이트
-                switch (state)
-                {
-                    case Enums.ActiveState.None:
-                        break;
-                    case Enums.ActiveState.Active:
-                        break;
-                    case Enums.ActiveState.NoGravity:
-                        break;
-                    case Enums.ActiveState.Roll:
-                        break;
-                }
+                OnStateExit(state);
                 state = value;
-                switch(value)
-                {
-                    case Enums.ActiveState.None:
-                        rigid.gravityScale = defaultGravityScale;
-                        break;
-                    case Enums.ActiveState.Active:
-                        rigid.velocity = Vector2.zero;
-                        rigid.gravityScale = defaultGravityScale;
-                        break;
-                    case Enums.ActiveState.NoGravity:
-                        rigid.velocity = Vector2.zero;
-                        rigid.gravityScale = 0;
-                        break;
-                    case Enums.ActiveState.Roll:
-                        rigid.gravityScale = 0;
-                        break;
-                }
+                OnStateEnter(state);
+
             }
         }
     }
 
+    /// <summary>
+    /// 특정 상태에서 나갈때의 처리를 실행하는 함수
+    /// </summary>
+    /// <param name="oldState">옛 상태</param>
+    void OnStateExit(Enums.ActiveState oldState)
+    {
+        switch (oldState)
+        {
+            case Enums.ActiveState.None:
+                break;
+            case Enums.ActiveState.Active:
+                break;
+            case Enums.ActiveState.Roll:
+                break;
+        }
+    }
+
+    /// <summary>
+    /// 특정 상태가 되었을 때의 처리를 실행하는 함수
+    /// </summary>
+    /// <param name="newState">새 상태</param>
+    void OnStateEnter(Enums.ActiveState newState)
+    {
+        switch (newState)
+        {
+            case Enums.ActiveState.None:
+                rigid.gravityScale = defaultGravityScale;
+                break;
+            case Enums.ActiveState.Active:
+                rigid.velocity = Vector2.zero;
+                rigid.gravityScale = defaultGravityScale;
+                break;
+            case Enums.ActiveState.Roll:
+                rigid.gravityScale = 0;
+                break;
+        }
+    }
+
+    public override float CurrentHealth 
+    { 
+        get => currentHealth;
+        protected set 
+        {
+            // 최소값은 0, 최대값은 maxHealth로 제한
+            currentHealth = Mathf.Clamp(value, 0, maxHealth);
+            onHpChange?.Invoke(currentHealth / maxHealth);
+            if (currentHealth <= 0)
+            {
+                Die(); // HP가 0이하면 사망
+            }
+        }
+    }
+
+    public Action<float> onHpChange;
 
     // 애니메이터용 해시값들
     #region AnimatorHashs & Components------------___------
@@ -111,6 +143,7 @@ public class PlayerController : CharacterBase
     readonly int Parry_Hash = Animator.StringToHash("Parry");
     readonly int Hurt_Hash = Animator.StringToHash("Hurt");
     readonly int Block_Hash = Animator.StringToHash("Block");
+    readonly int Death_Hash = Animator.StringToHash("Death");
 
     private Animator animator;                      // 애니메이터
     private Rigidbody2D rigid;                      // 리지드바디
@@ -123,7 +156,7 @@ public class PlayerController : CharacterBase
     private void Awake()
     {
         //체력 초기화
-        currentHealth = maxHealth;
+        CurrentHealth = maxHealth;
 
         spriteRenderer = GetComponent<SpriteRenderer>();
         inputHandler = GetComponent<PlayerInputHandler>();
@@ -336,8 +369,6 @@ public class PlayerController : CharacterBase
                 break;
             case Enums.ActiveState.Active:
                 break;
-            case Enums.ActiveState.NoGravity:
-                break;
             case Enums.ActiveState.Roll:
                 rigid.velocity = new Vector2(facingDirection * rollForce, rigid.velocity.y);
                 break;
@@ -398,11 +429,11 @@ public class PlayerController : CharacterBase
     {
         base.Attack(target);
 
-        //공격에 성공하면 전진거리의 절반만큼 뒤로 물러남
-        if(grounded)
-            rigid.velocity = new Vector2(attackForce * -facingDirection * 0.5f, rigid.velocity.y);
-        else
+        //공중공격에 성공하면 조금 위로 떠오름
+        if(!grounded)
             rigid.velocity = new Vector2(rigid.velocity.x, airAttackForce);
+        //else    //전진거리의 절반만큼 뒤로 물러남
+          //  rigid.velocity = new Vector2(attackForce * -facingDirection * 0.5f, rigid.velocity.y);
     }
 
     #region 가드패리 함수 

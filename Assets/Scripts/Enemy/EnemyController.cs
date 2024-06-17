@@ -162,6 +162,9 @@ public class EnemyController : CharacterBase
     public float lastX = 0;
 
     //컴포넌트
+    readonly int Hit_Hash = Animator.StringToHash("Hit");
+    readonly int Death_Hash = Animator.StringToHash("Death");
+
     private EnemySensor_Search enemySensor = null;
     protected Rigidbody2D rigid;
     protected Animator animator;

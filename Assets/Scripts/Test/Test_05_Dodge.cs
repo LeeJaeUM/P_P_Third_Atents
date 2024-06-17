@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class Test_05_Attacks : TestBase
+public class Test_05_Dodge : TestBase
 {
     AnimationManager manager;
 
