@@ -10,6 +10,38 @@ using static UnityEngine.Rendering.DebugUI;
 [RequireComponent(typeof(PlayerInputHandler))]
 public class PlayerController : CharacterBase
 {
+    public override float CurrentHealth
+    {
+        get => currentHealth;
+        protected set
+        {
+            // 최소값은 0, 최대값은 maxHealth로 제한
+            currentHealth = Mathf.Clamp(value, 0, maxHealth);
+            onHpChange?.Invoke(currentHealth / maxHealth);
+            if (currentHealth <= 0)
+            {
+                Die(); // HP가 0이하면 사망
+            }
+        }
+    }
+    public Action<float> onHpChange;
+
+    private float maxMana = 10;
+    private float curMana = 0;
+    public float CurMana
+    {
+        get => curMana;
+        set
+        {
+            if (curMana != value)
+            {
+                curMana = value;
+                onMpChange?.Invoke(curMana / maxMana);
+            }
+        }
+    }
+    public Action<float> onMpChange;
+
     [Header("Move Check")]
     [SerializeField] private float moveSpeed = 4.0f;         // 이동 속도
     [SerializeField] private float slowMoveSpeed = 0.5f;         // 이동 속도
@@ -114,22 +146,6 @@ public class PlayerController : CharacterBase
         }
     }
 
-    public override float CurrentHealth 
-    { 
-        get => currentHealth;
-        protected set 
-        {
-            // 최소값은 0, 최대값은 maxHealth로 제한
-            currentHealth = Mathf.Clamp(value, 0, maxHealth);
-            onHpChange?.Invoke(currentHealth / maxHealth);
-            if (currentHealth <= 0)
-            {
-                Die(); // HP가 0이하면 사망
-            }
-        }
-    }
-
-    public Action<float> onHpChange;
 
     // 애니메이터용 해시값들
     #region AnimatorHashs & Components------------___------

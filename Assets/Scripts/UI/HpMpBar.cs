@@ -4,10 +4,11 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class HpBar : MonoBehaviour
+public class HpMpBar : MonoBehaviour
 {
     Slider yellowSlider;
     Slider redSlider;
+    Slider mpSlider;
 
     private float downDuration = 0.65f;
 
@@ -18,12 +19,21 @@ public class HpBar : MonoBehaviour
 
         child = transform.GetChild(1);
         redSlider = child.GetComponent<Slider>();
+
+        child = transform.GetChild (2);
+        mpSlider = child.GetComponent<Slider>();
     }
 
     private void Start()
     {
         PlayerController player = GameManager.Instance.Player;
         player.onHpChange += UpdateHpBar;
+        player.onMpChange += UpdateMpBar;
+    }
+
+    private void UpdateMpBar(float percent)
+    {
+        mpSlider.value = percent;
     }
 
     private void UpdateHpBar(float percent)
