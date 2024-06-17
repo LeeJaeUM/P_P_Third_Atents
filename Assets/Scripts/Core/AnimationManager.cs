@@ -13,7 +13,7 @@ public class AnimationManager : MonoBehaviour
     private float speedMultiplier = 0.25f;
     public float SpeedMultiplier => speedMultiplier;
     [SerializeField]
-    private float timeSlowDuration = 2.0f;
+    private float timeSlowDuration = 4.0f;
 
     private bool isSlow = false;
 

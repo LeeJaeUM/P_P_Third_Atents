@@ -31,16 +31,18 @@ public class PlayerController : CharacterBase
     public float CurMana
     {
         get => curMana;
-        set
+        private set
         {
             if (curMana != value)
             {
-                curMana = value;
+                curMana = Mathf.Clamp(value, 0, maxMana);
                 onMpChange?.Invoke(curMana / maxMana);
             }
         }
     }
     public Action<float> onMpChange;
+
+    private float upMana = 2.0f;
 
     [Header("Move Check")]
     [SerializeField] private float moveSpeed = 4.0f;         // 이동 속도
@@ -208,7 +210,11 @@ public class PlayerController : CharacterBase
     //스킬 사용
     private void OnSkill()
     {
-        animationManager.AnimSlowCo();
+        if(CurMana >= 10)
+        {
+            animationManager.AnimSlowCo();
+            CurMana = 0;
+        }
     }
 
     // 방패 내리기 이벤트 처리
@@ -342,6 +348,7 @@ public class PlayerController : CharacterBase
         rigid = GetComponent<Rigidbody2D>();
         groundSensor = transform.GetChild(0).GetComponent<PlayerSensor_Ground>();
         animationManager = GameManager.Instance.AnimationManager;
+
     }
 
     // 업데이트
@@ -470,6 +477,9 @@ public class PlayerController : CharacterBase
             // 패링 시 느려짐 효과 테스트
             //StartCoroutine(TimeSlow());
 
+            //마나 회복
+            CurMana += upMana;
+
             StartCoroutine(TakeDamageActive());
             Debug.Log("패리성공");
         }
@@ -506,6 +516,11 @@ public class PlayerController : CharacterBase
     {
         if (isParryAble)    //패리가 가능할 때 parryTime_cur은 타이머 처럼 상승
             parryTime_cur += Time.deltaTime;
+        else
+        {
+            if (parryTime_cur > parryTime_origin * 0.5f)
+                parryTime_cur -= Time.deltaTime * 0.3f;
+        }
 
         if (parryTime_cur > parryTime_origin)    //패리 가능 시간을 넘기면 패리 불가능
             isParryAble = false;

@@ -485,6 +485,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   seed: -1
+  testmp: 4
 --- !u!1 &503557346
 GameObject:
   m_ObjectHideFlags: 0
@@ -2149,6 +2150,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6450574643528360129, guid: f0aa9940118c49547b45e3f0ce8652e9, type: 3}
       propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8684696882996513903, guid: f0aa9940118c49547b45e3f0ce8652e9, type: 3}
+      propertyPath: m_Value
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
