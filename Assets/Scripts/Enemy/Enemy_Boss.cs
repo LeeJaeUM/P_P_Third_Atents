@@ -6,6 +6,8 @@ public class Enemy_Boss : EnemyController
 {
     //Boss의 Find는 그로기로 사용
 
+    
+
     enum AttackPattern
     {
         NormalAttack = 0,
@@ -97,8 +99,45 @@ public class Enemy_Boss : EnemyController
 
     protected override void Update_Attack()
     {
-        base.Update_Attack();
+        //공격 딜레이용 시간변수
+        timeSinceAttack += Time.deltaTime;
+
+        //공격중엔 회전 안함
+        if (!isAttacking)
+        {
+            SetFacingDirection();
+        }
+
+        // 플레이어와의 x축 거리 계산 후 공격거리보다 크고 공격중이 아니면 chase로 변경
+        if (Mathf.Abs(transform.position.x - player.transform.position.x) > attackDistance && !isAttacking)
+        {
+            State = BehaviorState.Chase;
+        }
+        else
+        {
+            // 공격 로직
+            if (timeSinceAttack > curAttackDelay)
+            {
+                AttackTry();
+            }
+        }
     }
+
+    protected override void AttackTry()
+    {
+
+        timeSinceAttack = 0.0f;
+
+        animator.SetTrigger("Attack");
+
+        StartCoroutine(Attacking_Physics());
+    }
+
+    protected override IEnumerator Attacking_Physics()
+    {
+        return base.Attacking_Physics();
+    }
+
 
 
 }
