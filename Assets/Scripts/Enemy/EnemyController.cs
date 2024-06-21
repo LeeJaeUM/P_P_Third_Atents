@@ -47,7 +47,7 @@ public class EnemyController : CharacterBase
     /// <summary>
     /// 적의 상태 확인 및 설정용 프로퍼티
     /// </summary>
-    BehaviorState State
+    protected BehaviorState State
     {
         get => state;
         set
@@ -64,7 +64,7 @@ public class EnemyController : CharacterBase
     /// <summary>
     /// 각 상태가 되었을때 상태별 업데이트 함수를 저장하는 델리게이트(함수포인터의 역할)
     /// </summary>
-    Action onUpdate = null;
+    protected Action onUpdate = null;
 
     /// <summary>
     /// 특수 패리 가능 상태
@@ -100,7 +100,7 @@ public class EnemyController : CharacterBase
     [SerializeField] private float rightPatrol = 0;
 
     public float patrolRange = 3;
-    [SerializeField] private bool isRightPatrol = true;
+    [SerializeField] protected bool isRightPatrol = true;
 
 
     [Header("Sprite")]
@@ -112,7 +112,7 @@ public class EnemyController : CharacterBase
     public int FacingDirection
     {
         get => facingDirection;
-        private set
+        protected set
         {
             if(facingDirection != value)
             {
@@ -129,7 +129,7 @@ public class EnemyController : CharacterBase
     /// <summary>
     /// 마지막으로 플레이어를 본 위치. 서치센서가 인식했을 때 chase로 state를 바꾸면서 최신화함
     /// </summary>
-    private Vector3 lastSeenPosition;               
+    protected Vector3 lastSeenPosition;               
 
     public float stoppingDistance = 1.8f;          //마지막으로 본 위치에 도달했다고 판정하는 거리
 
@@ -160,12 +160,12 @@ public class EnemyController : CharacterBase
     /// <summary>
     /// 탐색 진행 시간
     /// </summary>
-    float findTimeElapsed = 0.0f;
+    protected float findTimeElapsed = 0.0f;
 
     /// <summary>
     /// 추적 대상
     /// </summary>
-    private PlayerController player = null;
+    protected PlayerController player = null;
 
     public float chaseDis = 7.0f;
 
@@ -177,11 +177,15 @@ public class EnemyController : CharacterBase
     //컴포넌트
     readonly int Hit_Hash = Animator.StringToHash("Hit");
     readonly int Death_Hash = Animator.StringToHash("Death");
+    readonly int Ability_Hash = Animator.StringToHash("Ability");
+    readonly int Attack_Hash = Animator.StringToHash("Attack");
+    readonly int Attack2_Hash = Animator.StringToHash("Attack2");
+    readonly int Attack3_Hash = Animator.StringToHash("Attack3");
 
     private EnemySensor_Search enemySensor = null;
     protected Rigidbody2D rigid;
     protected Animator animator;
-    private SpriteRenderer spriteRenderer;
+    protected SpriteRenderer spriteRenderer;
     private AnimationManager animationManager;
 
     // UnityEvent Functions--------------------------------------------------------------------------------------------------------
@@ -217,7 +221,7 @@ public class EnemyController : CharacterBase
     }
 
 
-    private void Start()
+    protected virtual void Start()
     {
         State = BehaviorState.Patrol;
 
@@ -232,7 +236,7 @@ public class EnemyController : CharacterBase
 
     }
 
-    private void Update()
+    protected virtual void Update()
     {
         onUpdate();
         lastX = lastSeenPosition.x;
@@ -243,7 +247,7 @@ public class EnemyController : CharacterBase
 
     #region State Updates
 
-    void Update_Patrol()
+    protected virtual void Update_Patrol()
     {
         if (isRightPatrol)
         {
@@ -274,7 +278,7 @@ public class EnemyController : CharacterBase
 
     }
 
-    void Update_Chase()
+    protected virtual void Update_Chase()
     {
         SetFacingDirection();
 
@@ -293,7 +297,7 @@ public class EnemyController : CharacterBase
         }
     }
 
-    void Update_Find()
+    protected virtual void Update_Find()
     {
         findTimeElapsed += Time.deltaTime;
         if (findTimeElapsed > findTime)
@@ -303,7 +307,7 @@ public class EnemyController : CharacterBase
     }
 
 
-    void Update_Attack()
+    protected virtual void Update_Attack()
     {
         //공격 딜레이용 시간변수
         timeSinceAttack += Time.deltaTime;
@@ -329,7 +333,7 @@ public class EnemyController : CharacterBase
         }
     }
 
-    void Update_Dead()
+    protected void Update_Dead()
     {
         //animator.SetTrigger("Die");
         Destroy(this.gameObject, 2f);
@@ -341,7 +345,7 @@ public class EnemyController : CharacterBase
     /// 특정 상태가 되었을 때의 처리를 실행하는 함수
     /// </summary>
     /// <param name="newState">새 상태</param>
-    void OnStateEnter(BehaviorState newState)
+    protected virtual void OnStateEnter(BehaviorState newState)
     {
         switch (newState)
         {
@@ -371,7 +375,7 @@ public class EnemyController : CharacterBase
     /// 특정 샅애에서 나갈때의 처리를 실행하는 함수
     /// </summary>
     /// <param name="oldState">옛 상태</param>
-    void OnStateExit(BehaviorState oldState)
+    protected virtual void OnStateExit(BehaviorState oldState)
     {
         switch (oldState)
         {
@@ -419,7 +423,7 @@ public class EnemyController : CharacterBase
     /// </summary>
     /// <param name="position">플레이어가 시야범위 안에 있을 때 플레이어의 위치</param>
     /// <returns>true면 시야범위 안에 있다. false면 시야범위 안에 없다.</returns>
-    private bool IsPlayerInSight(out Vector3 position)
+    protected bool IsPlayerInSight(out Vector3 position)
     {
         position = Vector3.zero;
 
@@ -466,7 +470,7 @@ public class EnemyController : CharacterBase
     /// 위치로 이동하는 함수
     /// </summary>
     /// <param name="targetPosition">이동할 위치</param>
-    private void MoveTowards(Vector3 targetPosition)
+    protected void MoveTowards(Vector3 targetPosition)
     {
         targetPosition = new Vector3(targetPosition.x, 0, 0);
         Vector3 myPosition = new Vector3(transform.position.x, 0, 0);
@@ -537,7 +541,7 @@ public class EnemyController : CharacterBase
     /// <summary>
     /// 공격 상태에서 플레이어를 바라보는 함수
     /// </summary>
-    private void SetFacingDirection()
+    protected void SetFacingDirection()
     {
         if (transform.position.x < player.transform.position.x)
             FacingDirection = 1;
