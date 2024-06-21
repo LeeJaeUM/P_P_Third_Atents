@@ -6,6 +6,14 @@ public class Enemy_Boss : EnemyController
 {
     //Boss의 Find는 그로기로 사용
 
+    enum AttackPattern
+    {
+        NormalAttack = 0,
+        PowerAttack,
+        Dash,
+        Missile
+    }
+
     protected override void Start()
     {
         base.Start();
@@ -80,7 +88,11 @@ public class Enemy_Boss : EnemyController
 
     protected override void Update_Find()
     {
-        base.Update_Find();
+        findTimeElapsed += Time.deltaTime;
+        if (findTimeElapsed > findTime)
+        {
+            State = BehaviorState.Chase;   // 그로기 시간이 끝나면 다시 Chase 시작
+        }
     }
 
     protected override void Update_Attack()

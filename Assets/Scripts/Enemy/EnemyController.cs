@@ -145,7 +145,7 @@ public class EnemyController : CharacterBase
     public Action onAttack;
     public Action onExitAttackState;
     [SerializeField] protected bool isAttacking = false;      // 공격중인지 판단하는 변수
-    [SerializeField] protected float curTimeAttackElaped = 1f;      // 공격중인지 판단하는 변수
+    [SerializeField] protected float curTimeAttackElaped = 1f;      // 공격중에 회전을 막을 시간
     [SerializeField] protected float defaultTimeAttackElaped = 1f;      // 공격중인지 판단하는 변수
 
     [SerializeField] private float curAnimSpeedMultiplier = 0.5f;      // 공격중인지 판단하는 변수
