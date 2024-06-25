@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class CharacterBase : MonoBehaviour, ICombat.IAttack, ICombat.IDamage, ICombat.IHealth
+public class CharacterBase : MonoBehaviour, ICombat.IAttack, ICombat.IDamage, ICombat.IHealth, ICombat.IParryState
 {
     //HP관련
     [SerializeField] protected int maxHealth = 100;
@@ -25,11 +25,27 @@ public class CharacterBase : MonoBehaviour, ICombat.IAttack, ICombat.IDamage, IC
     public int MaxHealth => maxHealth;
 
     /// <summary>
+    /// 특수 패리 가능 상태
+    /// </summary>
+    [SerializeField] protected Enums.ParryState parryState = Enums.ParryState.None;
+    public Enums.ParryState ParryState
+    {
+        get => parryState;
+        protected set
+        {
+            parryState = value;
+        }
+    }
+
+    /// <summary>
     /// 공격력
     /// </summary>
     [SerializeField] private float attackPower = 10.0f;
 
     protected float damageMultiplier = 1.0f;
+
+
+
 
     // 공격 함수
     public virtual void Attack(ICombat.IDamage target)
@@ -76,5 +92,12 @@ public class CharacterBase : MonoBehaviour, ICombat.IAttack, ICombat.IDamage, IC
     public virtual void Die()
     {
         Debug.Log($"_{gameObject.name}_이 Die 함");
+    }
+
+    /// <summary>
+    /// 특수공격이 패리되었을 때 enemy쪽에서 사용될 함수
+    /// </summary>
+    public virtual void ParrySec()
+    {
     }
 }

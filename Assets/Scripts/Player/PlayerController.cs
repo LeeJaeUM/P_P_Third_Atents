@@ -97,6 +97,7 @@ public class PlayerController : CharacterBase
     public Enums.ActiveState State
     {
         get => state;
+        //현재 테스트를 위해 public으로 열어둠
         set
         {
             if(state != value)

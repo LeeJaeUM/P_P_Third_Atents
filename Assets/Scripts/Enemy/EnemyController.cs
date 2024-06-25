@@ -66,19 +66,7 @@ public class EnemyController : CharacterBase
     /// </summary>
     protected Action onUpdate = null;
 
-    /// <summary>
-    /// 특수 패리 가능 상태
-    /// </summary>
-    [SerializeField] private Enums.ParryState parryState = Enums.ParryState.None;
-    public Enums.ParryState ParryState
-    {
-        get => parryState;
-        private set
-        {
-            parryState = value;
-        }
-    }
-
+ 
     // 이동 관련 ----------------------------------------------------------------------------------------
 
     /// <summary>
@@ -137,18 +125,37 @@ public class EnemyController : CharacterBase
 
     [Header("Attack")]
     [SerializeField] protected int currentAttack = 0;         // 현재 공격 단계
-    protected float timeSinceAttack = 0.0f;                   // 마지막 공격 이후 경과 시간
-    [SerializeField] protected float curAttackDelay = 1.5f;      // 공격 대기 시간
+    /// <summary>
+    /// 마지막 공격 이후 경과 시간
+    /// </summary>
+    protected float timeSinceAttack = 0.0f;
+    /// <summary>
+    /// 공격 대기 시간
+    /// </summary>
+    [SerializeField] protected float curAttackDelay = 1.5f;
     [SerializeField] protected float defaultAttackDelay = 1.5f;      // 공격 대기 시간
-    [SerializeField] protected float attackForce = 2.0f;      // 공격 시 앞으로 나갈 거리
+    /// <summary>
+    ///  공격 시 앞으로 나갈 거리
+    /// </summary>
+    [SerializeField] protected float attackForce = 2.0f;     
+    /// <summary>
+    /// 공격가능거리 플레이어와의 거리가 이보다 크면 공격벗어나게 되어있음
+    /// </summary>
     public float attackDistance = 3.0f;                     // 공격 가능 거리
     public Action onAttack;
     public Action onExitAttackState;
-    [SerializeField] protected bool isAttacking = false;      // 공격중인지 판단하는 변수
-    [SerializeField] protected float curTimeAttackElaped = 1f;      // 공격중에 회전을 막을 시간
-    [SerializeField] protected float defaultTimeAttackElaped = 1f;      // 공격중인지 판단하는 변수
+    /// <summary>
+    ///  // 공격중인지 판단하는 변수
+    /// </summary>
+    [SerializeField] protected bool isAttacking = false;     
+    /// <summary>
+    /// 공격중에 회전을 막을 시간
+    /// </summary>
+    [SerializeField] protected float curTimeAttackElaped = 1f;      
+    [SerializeField] protected float defaultTimeAttackElaped = 1f;      // 기본 회전방지 시간
 
-    [SerializeField] private float curAnimSpeedMultiplier = 0.5f;      // 공격중인지 판단하는 변수
+    [SerializeField] private float curAnimSpeedMultiplier = 0.5f;      // 현재 애니메이션이 느려질 속도, 기본설정이며 AnimationMAnager에서 설정함
+    public Action onRedAttack;  // 붉은 공격 이펙트 발생용 액션
 
     // 탐색 관련 -------------------------------------------------------------------------------------------
     [Header("Find")]
@@ -173,6 +180,7 @@ public class EnemyController : CharacterBase
     public float testATKsinceTIme = 0;      //공격거리 판단
     public float testRayYMulti = 0.5f;  //디버그레이 Y위치 
     public float lastX = 0;
+
 
     //컴포넌트
     readonly int Hit_Hash = Animator.StringToHash("Hit");
@@ -513,7 +521,7 @@ public class EnemyController : CharacterBase
         
         animator.SetTrigger("Attack");
 
-        StartCoroutine(Attacking_Physics());
+        //StartCoroutine(Attacking_Physics());
     }
 
     /// <summary>
@@ -522,9 +530,15 @@ public class EnemyController : CharacterBase
     /// <returns></returns>
     protected virtual IEnumerator Attacking_Physics()
     {
+        rigid.velocity = Vector3.zero;
         isAttacking = true;
-        rigid.velocity = new Vector2(attackForce * facingDirection, rigid.velocity.y);
-        yield return new WaitForSeconds(curTimeAttackElaped);
+        float temp = 0;
+        while(temp < curTimeAttackElaped)
+        {
+            temp += Time.deltaTime;
+            rigid.velocity = new Vector2(attackForce * facingDirection, rigid.velocity.y);
+            yield return null;
+        }
         isAttacking = false;
     }
 
@@ -591,6 +605,11 @@ public class EnemyController : CharacterBase
 
         float result = 1 / value;
         return Mathf.Round(result * 100f) / 100f; // 소수점 두 자리로 반올림
+    }
+
+    private void RedEffect()
+    {
+        onRedAttack?.Invoke();
     }
 
     // 미구현-----------------------------------------------------------------------------

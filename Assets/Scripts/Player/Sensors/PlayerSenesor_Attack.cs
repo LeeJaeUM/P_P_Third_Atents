@@ -48,11 +48,18 @@ public class PlayerSenesor_Attack : MonoBehaviour
     {
         // 충돌한 오브젝트에서 IDamage 인터페이스를 얻습니다.
         ICombat.IDamage damageable = collision.GetComponent<ICombat.IDamage>();
+        ICombat.IParryState enemyParryState = collision.GetComponent<ICombat.IParryState>();
 
         // IDamage 인터페이스가 구현되어 있는지 확인합니다.
         if (damageable != null)
         {
             controller.Attack(damageable);
+        }
+
+        if(enemyParryState != null)
+        {
+            //enemy의 parrystate인터페이스의 함수 실행
+            enemyParryState.ParrySec();
         }
     }
 
