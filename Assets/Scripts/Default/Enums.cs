@@ -19,4 +19,22 @@ public class Enums
         DashAttack,
         SuperGuard
     }
+
+    public enum AttackPatern
+    {
+        Attack_0,
+        Attack_1,
+        Attack_2,
+        Attack_3,
+        Attack_4,
+        Attack_5,
+        Attack_6
+    }
+
+    public enum AttackType
+    {
+        Moment,
+        Continue,
+        Dot
+    }
 }

@@ -36,6 +36,7 @@ public class EnemyController : CharacterBase
         Chase,      // 추적상태. 플레이어가 마지막으로 목격된 장소를 향해 계속 이동한다.
         Find,       // 탐색상태. 추적 도중에 플레이어가 시야에서 사라지면 두리번 거리며 주변을 찾는다.
         Attack,     // 공격상태. 추적 상태일 때 플레이어가 일정범위안에 들어오면 일정 주기로 공격을 한다.
+        Stun,
         Dead        // 사망상태. 죽는다.(일정 시간 후에 재생성)
     }
 
@@ -141,7 +142,10 @@ public class EnemyController : CharacterBase
     /// <summary>
     /// 공격가능거리 플레이어와의 거리가 이보다 크면 공격벗어나게 되어있음
     /// </summary>
-    public float attackDistance = 3.0f;                     // 공격 가능 거리
+    protected float attackDistance = 4.0f;                     // 공격 가능 거리
+    /// <summary>
+    /// 공격시 공격범위 콜라이더에 보낼 액션
+    /// </summary>
     public Action onAttack;
     public Action onExitAttackState;
     /// <summary>
@@ -156,6 +160,29 @@ public class EnemyController : CharacterBase
 
     [SerializeField] private float curAnimSpeedMultiplier = 0.5f;      // 현재 애니메이션이 느려질 속도, 기본설정이며 AnimationMAnager에서 설정함
     public Action onRedAttack;  // 붉은 공격 이펙트 발생용 액션
+
+    private float stunTime = 2.5f;
+    private float curStunTimer = 0;
+
+    [SerializeField]
+    protected Enums.AttackType[] attackTypes;
+
+    [SerializeField]
+    protected Enums.AttackPatern attackPattern = Enums.AttackPatern.Attack_0;
+    public Enums.AttackPatern AttackPattern
+    {
+        get => attackPattern;
+        set
+        {
+            if(attackPattern != value)
+            {
+                attackPattern = value;
+                onPaternChange?.Invoke((int)value);
+            }
+        }
+    }
+
+    public Action<int> onPaternChange;
 
     // 탐색 관련 -------------------------------------------------------------------------------------------
     [Header("Find")]
@@ -189,6 +216,7 @@ public class EnemyController : CharacterBase
     readonly int Attack_Hash = Animator.StringToHash("Attack");
     readonly int Attack2_Hash = Animator.StringToHash("Attack2");
     readonly int Attack3_Hash = Animator.StringToHash("Attack3");
+    readonly int Stun_Hash = Animator.StringToHash("Stun");
 
     private EnemySensor_Search enemySensor = null;
     protected Rigidbody2D rigid;
@@ -237,11 +265,6 @@ public class EnemyController : CharacterBase
 
         animationManager = GameManager.Instance.AnimationManager;
         animationManager.onAnimSlow += AttackVariableChange;
-    }
-
-    private void OnEnable()
-    {
-
     }
 
     protected virtual void Update()
@@ -298,6 +321,13 @@ public class EnemyController : CharacterBase
         MoveTowards(lastSeenPosition); // 마지막 위치로 이동
 
         // 현재 위치의 x가 lastSeenPosition의 x에 거의 도달했는지 확인
+        if (Mathf.Abs(transform.position.x - player.transform.position.x) < attackDistance)
+        {
+            // 상태를 Find로 변경
+            State = BehaviorState.Attack;
+        }
+
+        // 현재 위치의 x가 lastSeenPosition의 x에 거의 도달했는지 확인
         if (Mathf.Abs(transform.position.x - lastSeenPosition.x) <= stoppingDistance)
         {
             // 상태를 Find로 변경
@@ -347,6 +377,20 @@ public class EnemyController : CharacterBase
         Destroy(this.gameObject, 2f);
     }
 
+    /// <summary>
+    /// 스턴 시간 동안 멈추고 시간이 지나면 Chase로 변경
+    /// </summary>
+    protected void Update_Stun()
+    {
+        rigid.velocity = new Vector3(0, rigid.velocity.y);
+        curStunTimer += Time.deltaTime;
+        if(curStunTimer > stunTime)
+        {
+            curStunTimer = 0;
+            State = BehaviorState.Chase;
+        }
+    }
+
     #endregion
 
     /// <summary>
@@ -370,6 +414,10 @@ public class EnemyController : CharacterBase
                 break;
             case BehaviorState.Attack:
                 onUpdate = Update_Attack;
+                break;
+            case BehaviorState.Stun:
+                animator.SetTrigger(Stun_Hash);
+                onUpdate = Update_Stun;
                 break;
             case BehaviorState.Dead:
                 onUpdate = Update_Dead;
@@ -591,7 +639,7 @@ public class EnemyController : CharacterBase
     }
 
     /// <summary>
-    /// 받은 값의 역수를 반환하는 함수
+    /// 받은 값의 역수를 반환하는 함수 시간 느려짐에 활용
     /// </summary>
     /// <param name="value">float 0.25일때 리턴은 4</param>
     /// <returns>float 0.25일때 리턴은 4</returns>
@@ -611,6 +659,43 @@ public class EnemyController : CharacterBase
     {
         onRedAttack?.Invoke();
     }
+
+    public override void ParrySec()
+    {
+        State = BehaviorState.Stun;
+    }
+
+
+    /// <summary>
+    /// normalAttack
+    /// </summary>
+    /// <param name="target"></param>
+    public override void Attack0(ICombat.IDamage target)
+    {
+        // 기본 데미지 공격
+        base.Attack0(target);
+    }
+
+    /// <summary>
+    /// PowerAttack
+    /// </summary>
+    /// <param name="target"></param>
+    protected virtual void Attakc1(ICombat.IDamage target)
+    {
+
+        target.TakeDamage(attackPower * 0.8f, transform.position.x);
+    }
+
+    /// <summary>
+    /// 대시공격
+    /// </summary>
+    /// <param name="target"></param>
+    protected virtual void Attakc2(ICombat.IDamage target)
+    {
+
+        target.TakeDamage(attackPower * 4.0f, transform.position.x);
+    }
+
 
     // 미구현-----------------------------------------------------------------------------
     // ---------------------미구현--------------------------------------------------------

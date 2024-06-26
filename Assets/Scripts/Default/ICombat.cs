@@ -4,10 +4,6 @@ using UnityEngine;
 
 public class ICombat
 {
-    public interface IAttack
-    {
-        void Attack(IDamage target);
-    }
 
     public interface IDamage
     {

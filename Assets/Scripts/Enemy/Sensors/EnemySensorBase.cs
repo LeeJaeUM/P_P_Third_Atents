@@ -7,12 +7,12 @@ public class EnemySensorBase : MonoBehaviour
     protected EnemyController enemy;
     protected BoxCollider2D rangeCollider;
 
-    private float offsetX = 0;
-    private float offsetY = 0;
+    protected float offsetX = 0;
+    protected float offsetY = 0;
     private void Awake()
     {
         enemy = GetComponentInParent<EnemyController>();
-        rangeCollider = GetComponent<BoxCollider2D>();
+        rangeCollider = GetComponentInChildren<BoxCollider2D>();
         offsetX = rangeCollider.offset.x;
         offsetY = rangeCollider.offset.y;
     }

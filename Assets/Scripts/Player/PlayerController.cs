@@ -470,9 +470,9 @@ public class PlayerController : CharacterBase
             State = Enums.ActiveState.Default;
     }
 
-    public override void Attack(IDamage target)
+    public override void Attack0(IDamage target)
     {
-        base.Attack(target);
+        base.Attack0(target);
 
         //공중공격에 성공하면 조금 위로 떠오름
         if(!grounded)

@@ -15,16 +15,6 @@ public class Enemy_Boss : EnemyController
     [SerializeField]
     private float turnLockDuration = 0.1f;
 
-    protected enum AttackPattern
-    {
-        NormalAttack = 0,
-        PowerAttack,
-        Dash,
-        Missile
-    }
-    [SerializeField]
-    protected AttackPattern attackPattern = AttackPattern.NormalAttack;
-
     protected override void Start()
     {
         base.Start();
@@ -39,52 +29,6 @@ public class Enemy_Boss : EnemyController
         lastSeenPosition = player.transform.position;
     }
 
-    protected override void OnStateExit(BehaviorState oldState)
-    {
-        switch (oldState)
-        {
-            case BehaviorState.Find:
-                findTimeElapsed = 0;    //다시 Find로 돌아가을때를 위해 탐색시간 초기화
-                break;
-            case BehaviorState.Attack:
-                onExitAttackState?.Invoke();
-                break;
-            case BehaviorState.Dead:
-                gameObject.SetActive(true);
-                CurrentHealth = MaxHealth;
-                break;
-            default:
-                //case BehaviorState.Patrol:    // 사용하지 않음
-                //case BehaviorState.Chase:
-                break;
-        }
-    }
-
-    protected override void OnStateEnter(BehaviorState newState)
-    {
-        switch (newState)
-        {
-            case BehaviorState.Patrol:
-                isRightPatrol = true;
-                FacingDirection = 1;
-                onUpdate = Update_Patrol;
-                break;
-            case BehaviorState.Chase:
-                onUpdate = Update_Chase;
-                break;
-            case BehaviorState.Find:
-                onUpdate = Update_Find;
-                break;
-            case BehaviorState.Attack:
-                onUpdate = Update_Attack;
-                break;
-            case BehaviorState.Dead:
-                onUpdate = Update_Dead;
-                break;
-            default:
-                break;
-        }
-    }
     protected override void Update_Patrol()
     {
         State = BehaviorState.Chase;
@@ -92,20 +36,17 @@ public class Enemy_Boss : EnemyController
 
     protected override void Update_Chase()
     {
-        SetFacingDirection();
+        SetFacingDirection();        
+        
+        // 현재 위치의 x가 플레이어의 x에 거의 도달했는지 확인
+        if (Mathf.Abs(transform.position.x - player.transform.position.x) < attackDistance)
+        {
+            State = BehaviorState.Attack;
+        }
+
 
         MoveTowards(lastSeenPosition); // 마지막 위치로 이동
     }
-
-    protected override void Update_Find()
-    {
-        findTimeElapsed += Time.deltaTime;
-        if (findTimeElapsed > findTime)
-        {
-            State = BehaviorState.Chase;   // 그로기 시간이 끝나면 다시 Chase 시작
-        }
-    }
-
     protected override void Update_Attack()
     {
         //공격 딜레이용 시간변수
@@ -134,10 +75,10 @@ public class Enemy_Boss : EnemyController
                 isPaternOn = true;
                 switch (attackPattern)
                 {
-                    case AttackPattern.NormalAttack: AttackTry(); break;
-                    case AttackPattern.PowerAttack: AttackTry(); break;
-                    case AttackPattern.Missile: AttackTry(); break;
-                    case AttackPattern.Dash: DashAttack(); break;
+                    case Enums.AttackPatern.Attack_0: AttackTry(); break;
+                    case Enums.AttackPatern.Attack_1:  AttackTry(); break;
+                    case Enums.AttackPatern.Attack_2:      AttackTry(); break;
+                    case Enums.AttackPatern.Attack_3:         DashAttack(); break;
                 }
             }
         }
@@ -174,7 +115,6 @@ public class Enemy_Boss : EnemyController
 
     protected override void AttackTry()
     {
-
         animator.SetTrigger("Attack");
 
         StartCoroutine(Attacking_Physics());
@@ -195,6 +135,8 @@ public class Enemy_Boss : EnemyController
 
     private void IsPaternOff()
     {
+        //패리 가능 상태 되돌리고 패턴 종료 알림
+        parryState = Enums.ParryState.None;
         isPaternOn = false;
     }
 
@@ -221,11 +163,35 @@ public class Enemy_Boss : EnemyController
         curTimeAttackElaped = defaultTimeAttackElaped;
         attackForce = defaultAttackForce;
 
-        parryState = Enums.ParryState.None;
+        //parryState = Enums.ParryState.None;
     }
 
     #endregion
 
+    /// normalAttack
+    //public override void Attack(ICombat.IDamage target)
+    //{
+    //    // 기본 데미지 공격
+    //    base.Attack(target);
+    //}
+
+    /// <summary>
+    /// PowerAttack
+    /// </summary>
+    /// <param name="target"></param>
+    protected override void Attakc1(ICombat.IDamage target)
+    {
+        target.TakeDamage(attackPower * 0.8f, transform.position.x);
+    }
+
+    /// <summary>
+    /// 대시공격
+    /// </summary>
+    /// <param name="target"></param>
+    protected override void Attakc2(ICombat.IDamage target)
+    {
+        target.TakeDamage(attackPower * 4.0f, transform.position.x);
+    }
 
 #if UNITY_EDITOR
 

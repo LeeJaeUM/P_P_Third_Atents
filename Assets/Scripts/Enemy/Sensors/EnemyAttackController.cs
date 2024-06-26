@@ -4,12 +4,28 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem.XR;
 
-public class EnemySensor_Attack : EnemySensorBase
+public class EnemyAttackController : EnemySensorBase
 {
+    //공격범위 안에 들어오는지 확인 하는 스크립트
+
     private bool isFindPlayer = false;
+
+    private BoxCollider2D[] attackColliders;
+
+    public Action<ICombat.IDamage> onAttack0;
+    public Action<ICombat.IDamage> onAttack1;
+    public Action<ICombat.IDamage> onAttack2;
+    public Action<ICombat.IDamage> onAttack3;
+    public Action<ICombat.IDamage> onAttack4;
+    public Action<ICombat.IDamage> onAttack5;
+    public Action<ICombat.IDamage> onAttack6;
+    
 
     private void Start()
     {
+        //공격 범위들 배열에 넣기
+        attackColliders = GetComponentsInChildren<BoxCollider2D>();
+
         //enemyController에서 공격 델리게이트 보내면 공격범위 활성화 : 애니메이션 이벤트 사용 예정
         enemy.onAttack += () =>
         {
@@ -23,7 +39,10 @@ public class EnemySensor_Attack : EnemySensorBase
             rangeCollider.enabled = true;
         };
 
+        enemy.onPaternChange += PaternChange;
+
         rangeCollider.enabled = true;
+
     }
 
     protected override void Update()
@@ -35,6 +54,12 @@ public class EnemySensor_Attack : EnemySensorBase
             rangeCollider.enabled = true;
         }
     }
+    private void PaternChange(int obj)
+    {
+        throw new NotImplementedException();
+    }
+
+
 
     protected override void OnTriggerEnter2D(Collider2D collision)
     {
@@ -54,12 +79,7 @@ public class EnemySensor_Attack : EnemySensorBase
             //플레이어를 찾았을 때 공격한다. 콜라이더는 enemy로부터 델리게이트를 받아 비/활성화하여 데미지 줌
             // 충돌한 오브젝트에서 IDamage 인터페이스를 얻습니다.
             ICombat.IDamage damageable = collision.GetComponent<ICombat.IDamage>();
-
-            // IDamage 인터페이스가 구현되어 있는지 확인합니다.
-            if (damageable != null)
-            {
-                enemy.Attack(damageable);
-            }
+            onAttack0?.Invoke(damageable);
         }
 
     }

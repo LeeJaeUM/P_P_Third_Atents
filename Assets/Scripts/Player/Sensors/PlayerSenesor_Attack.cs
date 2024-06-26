@@ -53,7 +53,7 @@ public class PlayerSenesor_Attack : MonoBehaviour
         // IDamage 인터페이스가 구현되어 있는지 확인합니다.
         if (damageable != null)
         {
-            controller.Attack(damageable);
+            controller.Attack0(damageable);
         }
 
         if(enemyParryState != null)
