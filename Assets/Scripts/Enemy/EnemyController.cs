@@ -182,6 +182,9 @@ public class EnemyController : CharacterBase
         }
     }
 
+    /// <summary>
+    /// EnemyAttackController로 보낼 공격패턴 번호
+    /// </summary>
     public Action<int> onPaternChange;
 
     // 탐색 관련 -------------------------------------------------------------------------------------------
