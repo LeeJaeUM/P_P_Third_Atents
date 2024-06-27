@@ -385,7 +385,7 @@ public class EnemyController : CharacterBase
                     case Enums.AttackPatern.Attack_0: AttackTry(); break;
                     case Enums.AttackPatern.Attack_1: AttackTry(); break;
                     case Enums.AttackPatern.Attack_2: AttackTry(); break;
-                    case Enums.AttackPatern.Attack_3: DashAttack(); break;
+                    case Enums.AttackPatern.Attack_3: AttackTry(); break;
                 }
             }
         }
