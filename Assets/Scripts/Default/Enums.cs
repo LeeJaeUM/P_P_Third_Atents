@@ -31,10 +31,4 @@ public class Enums
         Attack_6
     }
 
-    public enum AttackType
-    {
-        Moment,
-        Continue,
-        Dot
-    }
 }

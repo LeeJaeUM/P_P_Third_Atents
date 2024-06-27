@@ -146,8 +146,8 @@ public class EnemyController : CharacterBase
     /// <summary>
     /// 공격시 공격범위 콜라이더에 보낼 액션
     /// </summary>
-    public Action onAttack;
-    public Action onExitAttackState;
+    public Action onAttack_Moment;
+    public Action<float> onAttack_Continue;
     /// <summary>
     ///  // 공격중인지 판단하는 변수
     /// </summary>
@@ -161,11 +161,9 @@ public class EnemyController : CharacterBase
     [SerializeField] private float curAnimSpeedMultiplier = 0.5f;      // 현재 애니메이션이 느려질 속도, 기본설정이며 AnimationMAnager에서 설정함
     public Action onRedAttack;  // 붉은 공격 이펙트 발생용 액션
 
+    public Action onStun;
     private float stunTime = 2.5f;
     private float curStunTimer = 0;
-
-    [SerializeField]
-    protected Enums.AttackType[] attackTypes;
 
     [SerializeField]
     protected Enums.AttackPatern attackPattern = Enums.AttackPatern.Attack_0;
@@ -420,6 +418,7 @@ public class EnemyController : CharacterBase
                 break;
             case BehaviorState.Stun:
                 animator.SetTrigger(Stun_Hash);
+                onStun?.Invoke();
                 onUpdate = Update_Stun;
                 break;
             case BehaviorState.Dead:
@@ -442,7 +441,6 @@ public class EnemyController : CharacterBase
                 findTimeElapsed = 0;    //다시 Find로 돌아가을때를 위해 탐색시간 초기화
                 break;
             case BehaviorState.Attack:
-                onExitAttackState?.Invoke();
                 break;
             case BehaviorState.Dead:
                 gameObject.SetActive(true);
@@ -564,7 +562,7 @@ public class EnemyController : CharacterBase
         //animator.SetTrigger("Attack" + currentAttack);
         //
         //공격 눌렀다고 알림 = 공격 범위 활성화 
-        onAttack?.Invoke();         //DoAttack() 함수로 대신 사용해서 애니메이션 이벤트로 활용
+        onAttack_Moment?.Invoke();         //DoAttack() 함수로 대신 사용해서 애니메이션 이벤트로 활용
 
 
 
@@ -599,7 +597,7 @@ public class EnemyController : CharacterBase
     protected virtual void DoAttack()
     {
         //공격 눌렀다고 알림 = 공격 범위 활성화
-        onAttack?.Invoke();
+        onAttack_Moment?.Invoke();
     }
 
 
