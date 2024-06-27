@@ -38,9 +38,9 @@ public class Enemy_Plant : EnemyController
         isAttacking = false;
     }
 
-    protected override void DoAttack()
+    protected override void DoAttack_Moment()
     {
-        base.DoAttack();    //액션 하나 onAttack?.Invoke();
+        base.DoAttack_Moment();    //액션 하나 onAttack?.Invoke();
         attackSpriteRenderer.enabled = false;
     }
 

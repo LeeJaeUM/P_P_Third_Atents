@@ -165,6 +165,12 @@ public class EnemyController : CharacterBase
     private float stunTime = 2.5f;
     private float curStunTimer = 0;
 
+    /// <summary>
+    /// 패턴 중이다
+    /// </summary>
+    [SerializeField]
+    protected bool isPaternOn = false;
+
     [SerializeField]
     protected Enums.AttackPatern attackPattern = Enums.AttackPatern.Attack_0;
     public Enums.AttackPatern AttackPattern
@@ -345,7 +351,9 @@ public class EnemyController : CharacterBase
         }
     }
 
-
+    /// <summary>
+    /// 공격 할 떄의 Update문
+    /// </summary>
     protected virtual void Update_Attack()
     {
         //공격 딜레이용 시간변수
@@ -358,8 +366,9 @@ public class EnemyController : CharacterBase
         }
 
         // 플레이어와의 x축 거리 계산 후 공격거리보다 크고 공격중이 아니면 chase로 변경
-        if (Mathf.Abs(transform.position.x - player.transform.position.x) > attackDistance && !isAttacking)
+        if (!isPaternOn && !isAttacking && Mathf.Abs(transform.position.x - player.transform.position.x) > attackDistance)
         {
+            Debug.Log("Attack에서 Chase로 바뀐다");
             State = BehaviorState.Chase;
         }
         else
@@ -367,7 +376,17 @@ public class EnemyController : CharacterBase
             // 공격 로직
             if (timeSinceAttack > curAttackDelay)
             {
-                AttackTry();
+                //공격 대기 시간 초기화
+                timeSinceAttack = 0.0f;
+                //패턴 시작 알림
+                isPaternOn = true;
+                switch (attackPattern)
+                {
+                    case Enums.AttackPatern.Attack_0: AttackTry(); break;
+                    case Enums.AttackPatern.Attack_1: AttackTry(); break;
+                    case Enums.AttackPatern.Attack_2: AttackTry(); break;
+                    case Enums.AttackPatern.Attack_3: DashAttack(); break;
+                }
             }
         }
     }
@@ -393,6 +412,8 @@ public class EnemyController : CharacterBase
     }
 
     #endregion
+
+
 
     /// <summary>
     /// 특정 상태가 되었을 때의 처리를 실행하는 함수
@@ -474,6 +495,8 @@ public class EnemyController : CharacterBase
          */
     }
 
+    #region 이동관련
+
 
     /// <summary>
     /// 플레이어가 시야범위 안에 있는지 확인하는 함수
@@ -544,11 +567,53 @@ public class EnemyController : CharacterBase
         rightPatrol = transform.position.x + patrolRange;
     }
 
-    //State를 Attack으로 변경한다. AttackSensor에서 사용
-    public void SetAttackState()
+
+    /// <summary>
+    /// AniamationManager에서 속도을 느리게 하면 공격관련, 이동속도 변수를 느리게 하는 변수
+    /// </summary>
+    /// <param name="isSlow">델리게이트로 받은 값. true면 느려지고, false면 정상으로 돌아온다</param>
+    private void AttackVariableChange(bool isSlow)
     {
-        State = BehaviorState.Attack;
+        curAnimSpeedMultiplier = GetInverse(animationManager.SpeedMultiplier);
+        if (isSlow)
+        {
+            //딜레이는 늘어나고 속도는 줄어들게 함
+            curAttackDelay *= curAnimSpeedMultiplier;
+            curTimeAttackElaped *= curAnimSpeedMultiplier;
+
+            curWalkSpeed *= animationManager.SpeedMultiplier;
+            curRunSpeed *= animationManager.SpeedMultiplier;
+        }
+        else
+        {
+            curAttackDelay = defaultAttackDelay;
+            curTimeAttackElaped = defaultTimeAttackElaped;
+
+            curWalkSpeed = defaultWalkSpeed;
+            curRunSpeed = defaultRunSpeed;
+        }
+
     }
+
+    /// <summary>
+    /// 받은 값의 역수를 반환하는 함수 시간 느려짐에 활용
+    /// </summary>
+    /// <param name="value">float 0.25일때 리턴은 4</param>
+    /// <returns>float 0.25일때 리턴은 4</returns>
+    public float GetInverse(float value)
+    {
+        if (value == 0)
+        {
+            Debug.LogError("0은 역수를 가질 수 없습니다.");
+            return float.NaN; // Not a Number를 반환하여 오류 표시
+        }
+
+        float result = 1 / value;
+        return Mathf.Round(result * 100f) / 100f; // 소수점 두 자리로 반올림
+    }
+
+
+    #endregion
 
     //공격 시작 함수
     protected virtual void AttackTry()
@@ -561,10 +626,9 @@ public class EnemyController : CharacterBase
         //아직 애니메이션 없어서 주석처리함
         //animator.SetTrigger("Attack" + currentAttack);
         //
+
         //공격 눌렀다고 알림 = 공격 범위 활성화 
-        onAttack_Moment?.Invoke();         //DoAttack() 함수로 대신 사용해서 애니메이션 이벤트로 활용
-
-
+        //onAttack_Moment?.Invoke();         //DoAttack() 함수로 대신 사용해서 애니메이션 이벤트로 활용
 
         timeSinceAttack = 0.0f;
         
@@ -594,12 +658,20 @@ public class EnemyController : CharacterBase
     /// <summary>
     /// 공격 범위 활성화 델리게이트 전송 함수. 애니메이션 이벤트로 사용
     /// </summary>
-    protected virtual void DoAttack()
+    protected virtual void DoAttack_Moment()
     {
         //공격 눌렀다고 알림 = 공격 범위 활성화
         onAttack_Moment?.Invoke();
     }
 
+    /// <summary>
+    /// 공격 범위 활성화 델리게이트 전송 함수. 애니메이션 이벤트로 사용
+    /// </summary>
+    protected virtual void DoAttack_Continue()
+    {
+        //공격 눌렀다고 알림 = 공격 범위 활성화
+        onAttack_Moment?.Invoke();
+    }
 
     /// <summary>
     /// 공격 상태에서 플레이어를 바라보는 함수
@@ -610,50 +682,6 @@ public class EnemyController : CharacterBase
             FacingDirection = 1;
         else
             FacingDirection = -1;
-    }
-
-    /// <summary>
-    /// AniamationManager에서 속도을 느리게 하면 공격관련, 이동속도 변수를 느리게 하는 변수
-    /// </summary>
-    /// <param name="isSlow">델리게이트로 받은 값. true면 느려지고, false면 정상으로 돌아온다</param>
-    private void AttackVariableChange(bool isSlow)
-    {
-        curAnimSpeedMultiplier = GetInverse(animationManager.SpeedMultiplier);
-        if (isSlow)
-        {
-            //딜레이는 늘어나고 속도는 줄어들게 함
-            curAttackDelay *= curAnimSpeedMultiplier;
-            curTimeAttackElaped *= curAnimSpeedMultiplier;
-
-            curWalkSpeed *= animationManager.SpeedMultiplier;
-            curRunSpeed *= animationManager.SpeedMultiplier;
-        }
-        else
-        {
-            curAttackDelay = defaultAttackDelay;
-            curTimeAttackElaped = defaultTimeAttackElaped;
-
-            curWalkSpeed = defaultWalkSpeed;
-            curRunSpeed = defaultRunSpeed;
-        }
-        
-    }
-
-    /// <summary>
-    /// 받은 값의 역수를 반환하는 함수 시간 느려짐에 활용
-    /// </summary>
-    /// <param name="value">float 0.25일때 리턴은 4</param>
-    /// <returns>float 0.25일때 리턴은 4</returns>
-    public float GetInverse(float value)
-    {
-        if (value == 0)
-        {
-            Debug.LogError("0은 역수를 가질 수 없습니다.");
-            return float.NaN; // Not a Number를 반환하여 오류 표시
-        }
-
-        float result = 1 / value;
-        return Mathf.Round(result * 100f) / 100f; // 소수점 두 자리로 반올림
     }
 
     private void RedEffect()

@@ -10,8 +10,7 @@ public class Enemy_Boss : EnemyController
     [SerializeField]
     private float dashAttackForce = 8.0f;
     private float defaultAttackForce = 2.0f;
-    [SerializeField]
-    private bool isPaternOn = false;
+
     [SerializeField]
     private float turnLockDuration = 0.1f;
 
@@ -75,10 +74,10 @@ public class Enemy_Boss : EnemyController
                 isPaternOn = true;
                 switch (attackPattern)
                 {
-                    case Enums.AttackPatern.Attack_0: AttackTry(); break;
-                    case Enums.AttackPatern.Attack_1:  AttackTry(); break;
-                    case Enums.AttackPatern.Attack_2:      AttackTry(); break;
-                    case Enums.AttackPatern.Attack_3:         DashAttack(); break;
+                    case Enums.AttackPatern.Attack_0:   AttackTry(); break;
+                    case Enums.AttackPatern.Attack_1:   AttackTry(); break;
+                    case Enums.AttackPatern.Attack_2:   AttackTry(); break;
+                    case Enums.AttackPatern.Attack_3:   DashAttack(); break;
                 }
             }
         }
@@ -113,7 +112,7 @@ public class Enemy_Boss : EnemyController
     }
 
 
-    protected override void AttackTry()
+    public override void Attack0(ICombat.IDamage target)
     {
         animator.SetTrigger("Attack");
 

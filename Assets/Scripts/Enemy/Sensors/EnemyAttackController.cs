@@ -10,6 +10,8 @@ public class EnemyAttackController : EnemySensorBase
 
     private BoxCollider2D[] attackColliders;
 
+    public int curPatern = 0;
+
     public Action<ICombat.IDamage> onAttack0;
     public Action<ICombat.IDamage> onAttack1;
     public Action<ICombat.IDamage> onAttack2;
@@ -43,6 +45,7 @@ public class EnemyAttackController : EnemySensorBase
 
     private void PaternChange(int atkIndex)
     {
+        curPatern = atkIndex;
         rangeCollider = attackColliders[atkIndex];
     }
 
@@ -53,7 +56,35 @@ public class EnemyAttackController : EnemySensorBase
         //플레이어를 찾았을 때 공격한다. 콜라이더는 enemy로부터 델리게이트를 받아 비/활성화하여 데미지 줌
         // 충돌한 오브젝트에서 IDamage 인터페이스를 얻습니다.
         ICombat.IDamage damageable = collision.GetComponent<ICombat.IDamage>();
-        //onAttack0?.Invoke(damageable);
+        if (damageable != null)
+        {
+            switch (curPatern)
+            {
+                case 0:
+                    onAttack0?.Invoke(damageable);
+                    break;
+                case 1:
+                    onAttack1?.Invoke(damageable);
+                    break;
+                case 2:
+                    onAttack2?.Invoke(damageable);
+                    break;
+                case 3:
+                    onAttack3?.Invoke(damageable);
+                    break;
+                case 4:
+                    onAttack4?.Invoke(damageable);
+                    break;
+                case 5:
+                    onAttack5?.Invoke(damageable);
+                    break;
+                case 6:
+                    onAttack6?.Invoke(damageable);
+                    break;
+
+            }
+        }
+      
     }
     IEnumerator ColliderOnOff_Moment()
     {
