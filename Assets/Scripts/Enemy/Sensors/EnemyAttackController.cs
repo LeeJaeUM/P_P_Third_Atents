@@ -19,28 +19,44 @@ public class EnemyAttackController : EnemySensorBase
     public Action<ICombat.IDamage> onAttack4;
     public Action<ICombat.IDamage> onAttack5;
     public Action<ICombat.IDamage> onAttack6;
+
+    private E_AtkEnter[] e_AtkEnters;
     
 
     private void Start()
     {
-        //공격 범위들 배열에 넣기
-        attackColliders = GetComponentsInChildren<BoxCollider2D>();
-
         //enemyController에서 공격 델리게이트 보내면 공격범위 활성화 : 애니메이션 이벤트 사용 예정
         enemy.onAttack_Moment += () =>
         {
             StartCoroutine(ColliderOnOff_Moment());
         };
 
-        enemy.onAttack_Continue += (duration) =>
+        enemy.onAttack_Continue += (maintenanceTime) =>
         {
-            StartCoroutine(ColliderOnOff_Continue(duration));
+            StartCoroutine(ColliderOnOff_Continue(maintenanceTime));
         };
 
         enemy.onPaternChange += PaternChange;
 
         rangeCollider.enabled = true;
 
+        //공격 범위들 배열에 넣기
+        attackColliders = GetComponentsInChildren<BoxCollider2D>();
+
+
+        //모든 공격 콜라이더 비활성화
+        foreach(var attack in attackColliders)
+        {
+            attack.enabled = false;
+        }
+
+        //각각 콜라이더에 액션 할당
+        e_AtkEnters = GetComponentsInChildren<E_AtkEnter>();
+
+        foreach (var e in e_AtkEnters)
+        {
+            e.onDamage += OnActionPush;
+        }
     }
 
     private void PaternChange(int atkIndex)
@@ -50,58 +66,63 @@ public class EnemyAttackController : EnemySensorBase
     }
 
 
-
-    protected override void OnTriggerEnter2D(Collider2D collision)
+    /// <summary>
+    /// 할당된 액션이 실행되면 현재 패턴에 따라서 데미지 함수 실행
+    /// 어느 콜라이더가 닿았는지는 생각안하고 패턴 번호만 가지고 판단함
+    /// </summary>
+    /// <param name="damageable"></param>
+    void OnActionPush(ICombat.IDamage damageable)
     {
-        //플레이어를 찾았을 때 공격한다. 콜라이더는 enemy로부터 델리게이트를 받아 비/활성화하여 데미지 줌
-        // 충돌한 오브젝트에서 IDamage 인터페이스를 얻습니다.
-        ICombat.IDamage damageable = collision.GetComponent<ICombat.IDamage>();
-        if (damageable != null)
+        Debug.Log("액션은 발동되었어");
+        switch (curPatern)
         {
-            switch (curPatern)
-            {
-                case 0:
-                    onAttack0?.Invoke(damageable);
-                    break;
-                case 1:
-                    onAttack1?.Invoke(damageable);
-                    break;
-                case 2:
-                    onAttack2?.Invoke(damageable);
-                    break;
-                case 3:
-                    onAttack3?.Invoke(damageable);
-                    break;
-                case 4:
-                    onAttack4?.Invoke(damageable);
-                    break;
-                case 5:
-                    onAttack5?.Invoke(damageable);
-                    break;
-                case 6:
-                    onAttack6?.Invoke(damageable);
-                    break;
+            case 0:
+                onAttack0?.Invoke(damageable);
+                Debug.Log("0");
+                break;
+            case 1:
+                onAttack1?.Invoke(damageable);
+                Debug.Log("1");
+                break;
+            case 2:
+                onAttack2?.Invoke(damageable);
+                Debug.Log("2");
 
-            }
+                break;
+            case 3:
+                onAttack3?.Invoke(damageable);
+                break;
+            case 4:
+                onAttack4?.Invoke(damageable);
+                break;
+            case 5:
+                onAttack5?.Invoke(damageable);
+                break;
+            case 6:
+                onAttack6?.Invoke(damageable);
+                break;
         }
-      
     }
+
     IEnumerator ColliderOnOff_Moment()
     {
-        rangeCollider.enabled = true;
+        BoxCollider2D tempColldier2D = rangeCollider;
+        tempColldier2D.enabled = true;
         yield return new WaitForSeconds(0.05f);
-        rangeCollider.enabled = false;
+        tempColldier2D.enabled = false;
     }
 
     /// <summary>
     /// 지속 시간 동안 계속 공격콜라이더를 활성화 시켜둠
     /// </summary>
-    /// <param name="duration"></param>
+    /// <param name="maintenanceTime"></param>
     /// <returns></returns>
-    IEnumerator ColliderOnOff_Continue(float duration)
+    IEnumerator ColliderOnOff_Continue(float maintenanceTime)
     {
-        rangeCollider.enabled = true;
-        yield return new WaitForSeconds(duration);
-        rangeCollider.enabled = false;
+        // 공격이 종료되기 전에 패턴이 바뀔 가능성 배제
+        BoxCollider2D tempColldier2D = rangeCollider;
+        tempColldier2D.enabled = true;
+        yield return new WaitForSeconds(maintenanceTime);
+        tempColldier2D.enabled = false;
     }
 }

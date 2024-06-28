@@ -19,16 +19,6 @@ public class Enemy_Plant : EnemyController
         attackSpriteRenderer = transform.GetChild(3).GetComponent<SpriteRenderer>();
     }
 
-    // 공격 방식이 하나만 있는 꽃 몬스터
-    protected override void AttackTry()
-    {
-        timeSinceAttack = 0.0f;
-
-        animator.SetTrigger("Attack");
-
-        StartCoroutine(Attacking_Physics());
-    }
-
     protected override IEnumerator Attacking_Physics()
     {
         attackSpriteRenderer.enabled = true;
@@ -38,9 +28,9 @@ public class Enemy_Plant : EnemyController
         isAttacking = false;
     }
 
-    protected override void DoAttack_Moment()
+    protected override void DoAttack_Collider_Moment()
     {
-        base.DoAttack_Moment();    //액션 하나 onAttack?.Invoke();
+        base.DoAttack_Collider_Moment();    //액션 하나 onAttack?.Invoke();
         attackSpriteRenderer.enabled = false;
     }
 

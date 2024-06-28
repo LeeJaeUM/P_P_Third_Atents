@@ -48,7 +48,7 @@ public class CharacterBase : MonoBehaviour, ICombat.IDamage, ICombat.IHealth, IC
 
 
     // 공격 함수
-    public virtual void Attack0(ICombat.IDamage target)
+    protected virtual void Attack0_Damage(ICombat.IDamage target)
     {
         // 공격 로직 구현 // 현재 공격자의 X위치도 포함
         target.TakeDamage(attackPower * damageMultiplier, transform.position.x);
@@ -97,7 +97,7 @@ public class CharacterBase : MonoBehaviour, ICombat.IDamage, ICombat.IHealth, IC
     /// <summary>
     /// 특수공격이 패리되었을 때 enemy쪽에서 사용될 함수
     /// </summary>
-    public virtual void ParrySec()
+    public virtual void EnterStunnedState()
     {
     }
 }

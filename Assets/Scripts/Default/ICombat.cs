@@ -15,7 +15,7 @@ public class ICombat
     {
         Enums.ParryState ParryState { get; }
 
-        void ParrySec();
+        void EnterStunnedState();
     }
 
     public interface IHealth
@@ -24,4 +24,5 @@ public class ICombat
         int MaxHealth { get; }
         void Die();
     }
+
 }

@@ -179,6 +179,7 @@ public class PlayerController : CharacterBase
     private SpriteRenderer spriteRenderer;          // 스프라이트 렌더러
     private PlayerInputHandler inputHandler;        // 플레이어 입력 핸들러
     private AnimationManager animationManager;
+    private PlayerSenesor_Attack sensor_Attack;
     #endregion
 
     private void Awake()
@@ -188,6 +189,7 @@ public class PlayerController : CharacterBase
 
         spriteRenderer = GetComponent<SpriteRenderer>();
         inputHandler = GetComponent<PlayerInputHandler>();
+        sensor_Attack = GetComponentInChildren<PlayerSenesor_Attack>();
     }
 
     private void OnEnable()
@@ -367,6 +369,7 @@ public class PlayerController : CharacterBase
         groundSensor = transform.GetChild(0).GetComponent<PlayerSensor_Ground>();
         animationManager = GameManager.Instance.AnimationManager;
 
+        sensor_Attack.onAttack += Attack0_Damage;
     }
 
     // 업데이트
@@ -470,9 +473,9 @@ public class PlayerController : CharacterBase
             State = Enums.ActiveState.Default;
     }
 
-    public override void Attack0(IDamage target)
+    protected override void Attack0_Damage(IDamage target)
     {
-        base.Attack0(target);
+        base.Attack0_Damage(target);
 
         //공중공격에 성공하면 조금 위로 떠오름
         if(!grounded)

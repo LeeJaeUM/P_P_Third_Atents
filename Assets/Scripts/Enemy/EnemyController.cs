@@ -3,9 +3,12 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 public class EnemyController : CharacterBase
 {
+    public bool TESTisPATERN = false;
+    public int TESTpaternNum= 0;
     /// <summary>
     /// HP 설정 및 확인용 프로퍼티 오버라이드함
     /// </summary>
@@ -125,6 +128,9 @@ public class EnemyController : CharacterBase
     // 공격 관련 ----------------------++++++++$$$$$$$$$$$+++++=-----------------------------------------------------
 
     [Header("Attack")]
+    public int maxPaternNum = 1;
+    public int curPaternNum = 0;
+
     [SerializeField] protected int currentAttack = 0;         // 현재 공격 단계
     /// <summary>
     /// 마지막 공격 이후 경과 시간
@@ -143,6 +149,9 @@ public class EnemyController : CharacterBase
     /// 공격가능거리 플레이어와의 거리가 이보다 크면 공격벗어나게 되어있음
     /// </summary>
     protected float attackDistance = 4.0f;                     // 공격 가능 거리
+
+    protected float attackMaintenanceTime = 0.5f;
+
     /// <summary>
     /// 공격시 공격범위 콜라이더에 보낼 액션
     /// </summary>
@@ -171,6 +180,9 @@ public class EnemyController : CharacterBase
     [SerializeField]
     protected bool isPaternOn = false;
 
+    /// <summary>
+    /// 공격 패턴
+    /// </summary>
     [SerializeField]
     protected Enums.AttackPatern attackPattern = Enums.AttackPatern.Attack_0;
     public Enums.AttackPatern AttackPattern
@@ -178,13 +190,16 @@ public class EnemyController : CharacterBase
         get => attackPattern;
         set
         {
-            if(attackPattern != value)
-            {
-                attackPattern = value;
-                onPaternChange?.Invoke((int)value);
-            }
+            attackPattern = value;
+            onPaternChange?.Invoke((int)value);
+
+            AttackAnimationStart();
+
+            //공격 대기 시간 다시 초기화 - 경직으로 끊겼을떄 대비
+            timeSinceAttack = 0.0f;
         }
     }
+
 
     /// <summary>
     /// EnemyAttackController로 보낼 공격패턴 번호
@@ -217,25 +232,31 @@ public class EnemyController : CharacterBase
 
 
     //컴포넌트
-    readonly int Hit_Hash = Animator.StringToHash("Hit");
-    readonly int Death_Hash = Animator.StringToHash("Death");
-    readonly int Ability_Hash = Animator.StringToHash("Ability");
-    readonly int Attack_Hash = Animator.StringToHash("Attack");
-    readonly int Attack2_Hash = Animator.StringToHash("Attack2");
-    readonly int Attack3_Hash = Animator.StringToHash("Attack3");
-    readonly int Stun_Hash = Animator.StringToHash("Stun");
+    protected readonly int Hit_Hash = Animator.StringToHash("Hit");
+    protected readonly int Death_Hash = Animator.StringToHash("Death");
+    protected readonly int Ability_Hash = Animator.StringToHash("Ability");
+    protected readonly int Attack0_Hash = Animator.StringToHash("Attack0");
+    protected readonly int Attack1_Hash = Animator.StringToHash("Attack1");
+    protected readonly int Attack2_Hash = Animator.StringToHash("Attack2");
+    protected readonly int Attack3_Hash = Animator.StringToHash("Attack3");
+    protected readonly int Attack4_Hash = Animator.StringToHash("Attack4");
+    protected readonly int Attack5_Hash = Animator.StringToHash("Attack5");
+    protected readonly int Attack6_Hash = Animator.StringToHash("Attack6");
+    protected readonly int Stun_Hash = Animator.StringToHash("Stun");
 
     private EnemySensor_Search enemySensor = null;
     protected Rigidbody2D rigid;
     protected Animator animator;
     protected SpriteRenderer spriteRenderer;
     private AnimationManager animationManager;
+    protected EnemyAttackController enemyAttackController = null;
 
     // UnityEvent Functions--------------------------------------------------------------------------------------------------------
     #region UnityEvent Functions
 
     protected virtual void Awake()
     {
+        enemyAttackController = GetComponentInChildren<EnemyAttackController>();
         rigid = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
         spriteRenderer = transform.GetChild(0).GetComponent<SpriteRenderer>();
@@ -272,7 +293,11 @@ public class EnemyController : CharacterBase
 
         animationManager = GameManager.Instance.AnimationManager;
         animationManager.onAnimSlow += AttackVariableChange;
+
+        //액션 등록을 상속을 위해 함수로 구분함
+        AttackActionRegistering();
     }
+
 
     protected virtual void Update()
     {
@@ -380,12 +405,12 @@ public class EnemyController : CharacterBase
                 timeSinceAttack = 0.0f;
                 //패턴 시작 알림
                 isPaternOn = true;
-                switch (attackPattern)
+                //헌재 공격 패턴을 랜덤으로 정한 값으로 넣음
+                if(!TESTisPATERN)
+                    ChangePatern();
+                else
                 {
-                    case Enums.AttackPatern.Attack_0: AttackTry(); break;
-                    case Enums.AttackPatern.Attack_1: AttackTry(); break;
-                    case Enums.AttackPatern.Attack_2: AttackTry(); break;
-                    case Enums.AttackPatern.Attack_3: AttackTry(); break;
+                    TestPatern();
                 }
             }
         }
@@ -612,29 +637,71 @@ public class EnemyController : CharacterBase
         return Mathf.Round(result * 100f) / 100f; // 소수점 두 자리로 반올림
     }
 
+    /// <summary>
+    /// 공격 상태에서 플레이어를 바라보는 함수
+    /// </summary>
+    protected void SetFacingDirection()
+    {
+        if (transform.position.x < player.transform.position.x)
+            FacingDirection = 1;
+        else
+            FacingDirection = -1;
+    }
 
     #endregion
 
-    //공격 시작 함수
-    protected virtual void AttackTry()
+    /// <summary>
+    /// 랜덤 패턴 시행 - 최대 패턴 개수 만큼 랜덤 돌림 - 복잡한 로직을 위해 virtual
+    /// </summary>
+    /// <returns>attackPatern의 인덱스</returns>
+    protected virtual void ChangePatern()
     {
-        //currentAttack++;
-        //if (currentAttack > 3)
-        //    currentAttack = 1;
-        //if (timeSinceAttack > 4.5f)
-        //    currentAttack = 1;
-        //아직 애니메이션 없어서 주석처리함
-        //animator.SetTrigger("Attack" + currentAttack);
-        //
+        int randomP = Random.Range(0, maxPaternNum);
+        AttackPattern = (Enums.AttackPatern)randomP;
+    }
 
-        //공격 눌렀다고 알림 = 공격 범위 활성화 
-        //onAttack_Moment?.Invoke();         //DoAttack() 함수로 대신 사용해서 애니메이션 이벤트로 활용
+    /// <summary>
+    /// 공격 콜라이더에 플레이어 충돌 시 데미지를 넘길 함수 액션에 등록 - enemyAttackController에서 알림
+    /// </summary>
+    protected virtual void AttackActionRegistering()
+    {
+        enemyAttackController.onAttack0 += Attack0_Damage;
+        enemyAttackController.onAttack1 += Attakc1_Damage;
+    }
+    /// <summary>
+    /// 공격 애니메이션을 실행하는 함수
+    /// </summary>
+    protected virtual void AttackAnimationStart()
+    {
+        switch (attackPattern)
+        {
+            case Enums.AttackPatern.Attack_0: animator.SetTrigger(Attack0_Hash); break;
+            case Enums.AttackPatern.Attack_1: animator.SetTrigger(Attack1_Hash); break;
+            case Enums.AttackPatern.Attack_2: animator.SetTrigger(Attack2_Hash); break;
+            case Enums.AttackPatern.Attack_3: animator.SetTrigger(Attack3_Hash); break;
+            case Enums.AttackPatern.Attack_4: animator.SetTrigger(Attack4_Hash); break;
+            case Enums.AttackPatern.Attack_5: animator.SetTrigger(Attack5_Hash); break;
+            case Enums.AttackPatern.Attack_6: animator.SetTrigger(Attack6_Hash); break;
+        }
 
-        timeSinceAttack = 0.0f;
-        
-        animator.SetTrigger("Attack");
+    }
 
-        //StartCoroutine(Attacking_Physics());
+    /// <summary>
+    /// 공격 범위 활성화 델리게이트 전송 함수. 애니메이션 이벤트로 사용
+    /// </summary>
+    protected virtual void DoAttack_Collider_Moment()
+    {
+        //공격 눌렀다고 알림 = 공격 범위 활성화
+        onAttack_Moment?.Invoke();
+    }
+
+    /// <summary>
+    /// 공격 범위 활성화 델리게이트 전송 함수. 애니메이션 이벤트로 사용
+    /// </summary>
+    protected void DoAttack_Collider_Continue()
+    {
+        //공격 눌렀다고 알림 = 공격 범위 활성화
+        onAttack_Continue?.Invoke(attackMaintenanceTime);
     }
 
     /// <summary>
@@ -655,74 +722,54 @@ public class EnemyController : CharacterBase
         isAttacking = false;
     }
 
-    /// <summary>
-    /// 공격 범위 활성화 델리게이트 전송 함수. 애니메이션 이벤트로 사용
-    /// </summary>
-    protected virtual void DoAttack_Moment()
-    {
-        //공격 눌렀다고 알림 = 공격 범위 활성화
-        onAttack_Moment?.Invoke();
-    }
-
-    /// <summary>
-    /// 공격 범위 활성화 델리게이트 전송 함수. 애니메이션 이벤트로 사용
-    /// </summary>
-    protected virtual void DoAttack_Continue()
-    {
-        //공격 눌렀다고 알림 = 공격 범위 활성화
-        onAttack_Moment?.Invoke();
-    }
-
-    /// <summary>
-    /// 공격 상태에서 플레이어를 바라보는 함수
-    /// </summary>
-    protected void SetFacingDirection()
-    {
-        if (transform.position.x < player.transform.position.x)
-            FacingDirection = 1;
-        else
-            FacingDirection = -1;
-    }
-
     private void RedEffect()
     {
         onRedAttack?.Invoke();
     }
 
-    public override void ParrySec()
+    /// <summary>
+    /// 
+    /// </summary>
+    public override void EnterStunnedState()
     {
         State = BehaviorState.Stun;
     }
+    private void IsPaternOff()
+    {
+        //패리 가능 상태 되돌리고 패턴 종료 알림
+        parryState = Enums.ParryState.None;
+        isPaternOn = false;
+    }
 
 
-    /// <summary>
-    /// normalAttack
-    /// </summary>
-    /// <param name="target"></param>
-    public override void Attack0(ICombat.IDamage target)
+    #region 공격패턴마다 정해진 데미지 주는 함수 EnemyAttackController에서 실행됨
+
+    protected override void Attack0_Damage(ICombat.IDamage target)
     {
         // 기본 데미지 공격
-        base.Attack0(target);
+        Debug.Log("0 attack 했음");
+
+        base.Attack0_Damage(target);
     }
 
-    /// <summary>
-    /// PowerAttack
-    /// </summary>
-    /// <param name="target"></param>
-    protected virtual void Attakc1(ICombat.IDamage target)
+    protected virtual void Attakc1_Damage(ICombat.IDamage target)
     {
-
-        target.TakeDamage(attackPower * 0.8f, transform.position.x);
+        Debug.Log("1 attack 했음");
+        target.TakeDamage(attackPower * 0.6f, transform.position.x);
     }
 
-    /// <summary>
-    /// 대시공격
-    /// </summary>
-    /// <param name="target"></param>
-    protected virtual void Attakc2(ICombat.IDamage target)
+    protected virtual void Attakc2_Damage(ICombat.IDamage target)
     {
-
+        Debug.Log("2 했음");
         target.TakeDamage(attackPower * 4.0f, transform.position.x);
+    }
+
+    #endregion
+
+
+    private void TestPatern()
+    {
+        AttackPattern = (Enums.AttackPatern)TESTpaternNum;
     }
 
 
