@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class CharacterBase : MonoBehaviour, ICombat.IDamage, ICombat.IHealth, ICombat.IParryState
+public class CharacterBase : MonoBehaviour, ICombat.IDamage, ICombat.IHealth
 {
     //HP관련
     [SerializeField] protected int maxHealth = 100;

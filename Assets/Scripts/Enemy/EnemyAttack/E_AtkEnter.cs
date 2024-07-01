@@ -5,8 +5,8 @@ using UnityEngine;
 
 public class E_AtkEnter : MonoBehaviour
 {
-
     public Action<ICombat.IDamage> onDamage;
+
     private void OnTriggerEnter2D(Collider2D collision)
     {
         ICombat.IDamage damageable = collision.GetComponent<ICombat.IDamage>();
@@ -14,5 +14,7 @@ public class E_AtkEnter : MonoBehaviour
         {
             onDamage?.Invoke(damageable);
         }
+
+
     }
 }

@@ -373,17 +373,17 @@ public class PlayerController : CharacterBase
         animationManager = GameManager.Instance.AnimationManager;
 
         sensor_Attack.onAttack += Attack0_Damage;
-        sensor_Attack.onParriedCheck += EnemyParry;
     }
 
-    private void EnemyParry(IParryState state)
-    {
-        //현재 적의 패리(가능)상태와 플레이어의 특수 패리상태를 비교하여 같으면 특수패리 성공
-        if(state.ParryState == parryState)
-        {
-            state.ParriedCheck();
-        }
-    }
+    //패리 판정을 적이 판단하도록 변경
+    //private void EnemyParry(IParryState state)
+    //{
+    //    //현재 적의 패리(가능)상태와 플레이어의 특수 패리상태를 비교하여 같으면 특수패리 성공
+    //    if(state.ParryState == parryState)
+    //    {
+    //        state.ParriedCheck();
+    //    }
+    //}
 
     // 업데이트
     private void Update()

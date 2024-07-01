@@ -20,6 +20,8 @@ public class EnemyAttackController : EnemySensorBase
     public Action<ICombat.IDamage> onAttack5;
     public Action<ICombat.IDamage> onAttack6;
 
+    public Action onStunned;
+
     private E_AtkEnter[] e_AtkEnters;
     
 
@@ -34,15 +36,6 @@ public class EnemyAttackController : EnemySensorBase
         enemy.onAttack_Continue += (maintenanceTime) =>
         {
             StartCoroutine(ColliderOnOff_Continue(maintenanceTime));
-        };
-
-        enemy.onStunned += () =>
-        {
-            //모든 공격 콜라이더 비활성화
-            foreach (var attack in attackColliders)
-            {
-                attack.enabled = false;
-            }
         };
 
         enemy.onPaternChange += PaternChange;
@@ -82,21 +75,50 @@ public class EnemyAttackController : EnemySensorBase
     /// <param name="damageable"></param>
     void OnActionPush(ICombat.IDamage damageable)
     {
-        Debug.Log("액션은 발동되었어");
+        // 일반 공격상태일때
+        if (enemy.ParryState == Enums.ParryState.None)
+        {
+            Debug.Log("일반공격함");
+            AttackDeligate(damageable);
+        }
+        else
+        {
+            Debug.Log("특수패리공격함");
+            //공격시 특수패리 가능 상태일때
+            //상대도 동일한 특수패리 가능 상태라면
+            if (enemy.ParryState == damageable.ParryState)
+            {
+                //모든 공격 콜라이더 비활성화
+                foreach (var attack in attackColliders)
+                {
+                    attack.enabled = false;
+                }
+                //스턴 상태로 변경
+                onStunned?.Invoke();
+            }
+            else
+            {
+                // 아니라면 데미지 입히기
+                AttackDeligate(damageable);
+            }
+        }
+       
+
+    }
+
+    private void AttackDeligate(ICombat.IDamage damageable)
+    {
+        //적이 공격을 성공하면 현재 패턴에 맞는 데미지를 주라는 액션 보냄
         switch (curPatern)
         {
             case 0:
                 onAttack0?.Invoke(damageable);
-                Debug.Log("0");
                 break;
             case 1:
                 onAttack1?.Invoke(damageable);
-                Debug.Log("1");
                 break;
             case 2:
                 onAttack2?.Invoke(damageable);
-                Debug.Log("2");
-
                 break;
             case 3:
                 onAttack3?.Invoke(damageable);

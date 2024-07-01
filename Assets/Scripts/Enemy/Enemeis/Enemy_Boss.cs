@@ -12,7 +12,7 @@ public class Enemy_Boss : EnemyController
     private float defaultAttackForce = 2.0f;
 
     [SerializeField]
-    private float turnLockDuration = 0.1f;
+    private float turnLockDuration = 0.15f;
 
     protected override void Start()
     {
@@ -64,6 +64,7 @@ public class Enemy_Boss : EnemyController
         }
         // 즉시 종료하지말고 0.1초 대기
         yield return new WaitForSeconds(turnLockDuration);
+        rigid.velocity = Vector2.zero;
         isAttacking = false;
     }
     private void AttackPhysicsFunc()
@@ -97,9 +98,6 @@ public class Enemy_Boss : EnemyController
         AttackStartSetting(2, 1f, 1);
 
         rigid.velocity = Vector3.zero;
-
-        //공격 종료 후 다시 원래대로 복귀 - 코루틴으로 활용
-        StartCoroutine(AttackEndRefresh());
     }
 
     private void Set_DashAttack()
@@ -108,9 +106,6 @@ public class Enemy_Boss : EnemyController
         AttackStartSetting(3, 0.3f, 10);
 
         rigid.velocity = Vector3.zero;
-
-        //공격 종료 후 다시 원래대로 복귀 - 코루틴으로 활용
-        StartCoroutine(AttackEndRefresh());
     }
 
     /// <summary>
@@ -129,9 +124,8 @@ public class Enemy_Boss : EnemyController
     /// <summary>
     /// 공격 종료 시 기본 설정으로 되돌림
     /// </summary>
-    private IEnumerator AttackEndRefresh()
+    private void AttackEndRefresh()
     {
-        yield return new WaitForSeconds(curAttackDelay);
         curAttackDelay = defaultAttackDelay;
         curTimeAttackElaped = defaultTimeAttackElaped;
         attackForce = defaultAttackForce;
@@ -156,7 +150,6 @@ public class Enemy_Boss : EnemyController
     /// <param name="target"></param>
     protected override void Attakc1_Damage(ICombat.IDamage target)
     {
-        Debug.Log("1 attack 했음  - boss");
         target.TakeDamage(attackPower * 0.8f, transform.position.x);
     }
 
@@ -166,7 +159,6 @@ public class Enemy_Boss : EnemyController
     /// <param name="target"></param>
     protected override void Attakc2_Damage(ICombat.IDamage target)
     {
-        Debug.Log("2 했음 - boss");
         target.TakeDamage(attackPower * 4.0f, transform.position.x);
     }
 

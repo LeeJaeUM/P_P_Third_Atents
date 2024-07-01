@@ -170,7 +170,6 @@ public class EnemyController : CharacterBase
     [SerializeField] private float curAnimSpeedMultiplier = 0.5f;      // 현재 애니메이션이 느려질 속도, 기본설정이며 AnimationMAnager에서 설정함
     public Action onRedAttack;  // 붉은 공격 이펙트 발생용 액션
 
-    public Action onStunned;
     private float stunTime = 2.5f;
     private float curStunTimer = 0;
 
@@ -190,13 +189,14 @@ public class EnemyController : CharacterBase
         get => attackPattern;
         set
         {
+            Debug.Log("패턴 변경됨");
             attackPattern = value;
             onPaternChange?.Invoke((int)value);
 
-            AttackAnimationStart();
-
             //공격 대기 시간 다시 초기화 - 경직으로 끊겼을떄 대비
             timeSinceAttack = 0.0f;
+            AttackAnimationStart();
+
         }
     }
 
@@ -282,6 +282,9 @@ public class EnemyController : CharacterBase
 
         animationManager = GameManager.Instance.AnimationManager;
         animationManager.onAnimSlow += AttackVariableChange;
+
+        //공격 시 특수패링 당했을때 오는 액션
+        enemyAttackController.onStunned += ParriedCheck;
 
         //액션 등록을 상속을 위해 함수로 구분함
         AttackActionRegistering();
@@ -382,14 +385,19 @@ public class EnemyController : CharacterBase
         // 플레이어와의 x축 거리 계산 후 공격거리보다 크고 공격중이 아니면 chase로 변경
         if (!isPaternOn && !isAttacking && Mathf.Abs(transform.position.x - player.transform.position.x) > attackDistance)
         {
-            Debug.Log("Attack에서 Chase로 바뀐다");
-            State = BehaviorState.Chase;
+            //다음 공격이 가능한 시점부터 추적가능
+            if (timeSinceAttack > curAttackDelay)
+            {
+                Debug.Log("Attack에서 Chase로 바뀐다");
+                State = BehaviorState.Chase;
+            }
         }
         else
         {
             // 공격 로직
             if (timeSinceAttack > curAttackDelay)
             {
+                Debug.Log("여긴가?");
                 //공격 대기 시간 초기화
                 timeSinceAttack = 0.0f;
                 //패턴 시작 알림
@@ -455,7 +463,6 @@ public class EnemyController : CharacterBase
                 Debug.Log("보스가 스턴걸림");
                 StopAllCoroutines();
                 animator.SetTrigger(Stun_Hash);
-                onStunned?.Invoke();
                 onUpdate = Update_Stun;
                 break;
             case BehaviorState.Dead:
@@ -484,31 +491,8 @@ public class EnemyController : CharacterBase
                 CurrentHealth = MaxHealth;
                 break;
             default:
-                //case BehaviorState.Patrol:    // 사용하지 않음
-                //case BehaviorState.Chase:
                 break;
         }
-        /*
-         switch (oldState)
-        {            
-            case BehaviorState.Find:
-                agent.angularSpeed = 120.0f;
-                StopAllCoroutines();
-                break;
-            case BehaviorState.Attack:
-                attackTarget.onDie -= ReturnWander;
-                attackTarget = null;
-                break;
-            case BehaviorState.Dead:
-                gameObject.SetActive(true);
-                HP = maxHP;
-                break;
-            default:
-            //case BehaviorState.Wander:    // 사용하지 않음
-            //case BehaviorState.Chase:
-                break;
-        }
-         */
     }
 
     #region 이동관련
