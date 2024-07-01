@@ -48,7 +48,7 @@ public class PlayerController : CharacterBase
     [SerializeField] private float moveSpeed = 4.0f;         // 이동 속도
     [SerializeField] private float slowMoveSpeed = 0.5f;         // 이동 속도
     [SerializeField] private float curMoveSpeed = 4.0f;         // 이동 속도
-    [SerializeField] private float jumpForce = 7.5f;         // 점프 힘
+    [SerializeField] private float jumpForce = 14f;         // 점프 힘
     [SerializeField] private float rollForce = 6.0f;         // 구르기 힘
 
     [SerializeField] private bool grounded = false; // 땅에 닿아 있는지 여부
@@ -87,7 +87,7 @@ public class PlayerController : CharacterBase
 
     [Header("Gravity")]
     private Vector2 inputDirection = Vector2.zero;  // 입력 방향
-    public static float defaultGravityScale = 1f;               //기본 중력 값
+    public static float defaultGravityScale = 2f;               //기본 중력 값
     [SerializeField] private float curGravityScale = 1f;          //중력값 확인용
     public bool isFirstCheck = false;
 
@@ -129,6 +129,10 @@ public class PlayerController : CharacterBase
             case Enums.ActiveState.NoMoveInput:
                 OnEnable();
                 break;
+            case Enums.ActiveState.DashAttack:
+                if(parryState == Enums.ParryState.DashAttack)
+                    parryState = Enums.ParryState.None;
+                break;
         }
     }
 
@@ -153,6 +157,9 @@ public class PlayerController : CharacterBase
                 break;
             case Enums.ActiveState.NoMoveInput:
                 OnDisable();
+                break;
+            case Enums.ActiveState.DashAttack:
+                parryState = Enums.ParryState.DashAttack;
                 break;
         }
     }
@@ -195,7 +202,6 @@ public class PlayerController : CharacterBase
     private void OnEnable()
     {
         inputHandler.OnMove += OnMove;              // 이동 이벤트 등록
-        inputHandler.OnStop += OnStop;              // 멈춤 이벤트 등록
         inputHandler.OnJumpPressed += OnJump;        // 점프 이벤트 등록
         inputHandler.OnAttackPressed += OnAttack;    // 공격 이벤트 등록
         inputHandler.OnRollPressed += OnRoll;        // 구르기 이벤트 등록
@@ -209,7 +215,6 @@ public class PlayerController : CharacterBase
     {
         inputHandler.OnSkillPressed -= OnSkill;
         inputHandler.OnMove -= OnMove;              // 이동 이벤트 해제
-        inputHandler.OnStop -= OnStop;              // 멈춤 이벤트 해제
         inputHandler.OnJumpPressed -= OnJump;        // 점프 이벤트 해제
         inputHandler.OnAttackPressed -= OnAttack;    // 공격 이벤트 해제
         inputHandler.OnRollPressed -= OnRoll;        // 구르기 이벤트 해제
@@ -308,7 +313,7 @@ public class PlayerController : CharacterBase
             State = Enums.ActiveState.DashAttack;
             animator.SetTrigger(DashAttack_Hash);
             onAttack?.Invoke();
-            animator.ResetTrigger("Attack");
+            animator.ResetTrigger("Attack" + currentAttack);
             StartCoroutine (ReChangeState());
         }
     }
@@ -332,8 +337,13 @@ public class PlayerController : CharacterBase
     // 이동 이벤트 처리
     private void OnMove()
     {
-        animator.SetFloat(AnimState_Hash, 1);
         inputDirection = inputHandler.InputDirection;
+
+        //A,D 입력 시 이동 애니메이션 출력
+        if(inputDirection.x != 0)
+            animator.SetFloat(AnimState_Hash, 1);
+        else
+            animator.SetFloat(AnimState_Hash, 0);
 
         if (!isRolling)
         {
@@ -352,13 +362,6 @@ public class PlayerController : CharacterBase
         }
     }
 
-    // 멈춤 이벤트 처리
-    private void OnStop()
-    {
-        inputDirection = Vector2.zero;
-        animator.SetFloat(AnimState_Hash, 0);
-    }
-
     #endregion
 
     // 시작 초기화
@@ -370,16 +373,21 @@ public class PlayerController : CharacterBase
         animationManager = GameManager.Instance.AnimationManager;
 
         sensor_Attack.onAttack += Attack0_Damage;
+        sensor_Attack.onParriedCheck += EnemyParry;
+    }
+
+    private void EnemyParry(IParryState state)
+    {
+        //현재 적의 패리(가능)상태와 플레이어의 특수 패리상태를 비교하여 같으면 특수패리 성공
+        if(state.ParryState == parryState)
+        {
+            state.ParriedCheck();
+        }
     }
 
     // 업데이트
     private void Update()
     {
-        
-
-        //핸들러의 인풋값 받음 // 인풋액션 함수로 이동
-        //inputDirection = inputHandler.InputDirection;
-
         if (!grounded && groundSensor.State())
         {
             grounded = true;
@@ -440,6 +448,7 @@ public class PlayerController : CharacterBase
             yield return null;
         }
         isRolling = false;
+
         if (inputDirection.x > 0)
         {
             spriteRenderer.flipX = false;

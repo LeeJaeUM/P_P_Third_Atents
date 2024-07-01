@@ -79,9 +79,11 @@ public class Enemy_Boss : EnemyController
         switch (attackPattern)
         {
             case Enums.AttackPatern.Attack_0: animator.SetTrigger(Attack0_Hash); break;
-            case Enums.AttackPatern.Attack_1: animator.SetTrigger(Attack1_Hash); break;
+            case Enums.AttackPatern.Attack_1: animator.SetTrigger(Attack1_Hash);
+                Set_PowerAttack();
+                break;
             case Enums.AttackPatern.Attack_2: animator.SetTrigger(Attack2_Hash);
-                DashAttack();
+                Set_DashAttack();
                 break;
             case Enums.AttackPatern.Attack_3: animator.SetTrigger(Attack3_Hash); break;
             case Enums.AttackPatern.Attack_4: animator.SetTrigger(Attack4_Hash); break;
@@ -90,7 +92,17 @@ public class Enemy_Boss : EnemyController
         }
     }
 
-    private void DashAttack()
+    private void Set_PowerAttack()
+    {
+        AttackStartSetting(2, 1f, 1);
+
+        rigid.velocity = Vector3.zero;
+
+        //공격 종료 후 다시 원래대로 복귀 - 코루틴으로 활용
+        StartCoroutine(AttackEndRefresh());
+    }
+
+    private void Set_DashAttack()
     {
         parryState = Enums.ParryState.DashAttack;
         AttackStartSetting(3, 0.3f, 10);
@@ -102,12 +114,12 @@ public class Enemy_Boss : EnemyController
     }
 
     /// <summary>
-    /// 공격 시작 시 변수값 설정할 함수
+    /// 공격 시작 시 변수값 설정할 함수 / 공격 대기시간, 공격 중 회전 방지 시간, 공격 시 앞으로 나아갈 힘
     /// </summary>
     /// <param name="delay">공격 대기시간</param>
     /// <param name="elapedTime">공격 중 회전 방지 시간</param>
     /// <param name="force">공격 시 앞으로 나아갈 힘</param>
-    private void AttackStartSetting(float delay, float elapedTime, float force)
+    private void AttackStartSetting(float delay, float elapedTime, float force = 1.0f)
     {
         curAttackDelay = delay;
         curTimeAttackElaped = elapedTime;
@@ -165,7 +177,7 @@ public class Enemy_Boss : EnemyController
     public void TestAttack3()
     {
         State = BehaviorState.Attack;
-        DashAttack();
+        Set_DashAttack();
     }
 
 #endif

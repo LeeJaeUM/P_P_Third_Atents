@@ -441,7 +441,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 458676026}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 514aa26b75ae24342bbc25a1f8ff953f, type: 3}
   m_Name: 
@@ -1205,6 +1205,18 @@ PrefabInstance:
       propertyPath: m_IsTrigger
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 3495755792787229024, guid: 0651f8828d10a604d966931a8ad2b13b, type: 3}
+      propertyPath: TESTisPATERN
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3495755792787229024, guid: 0651f8828d10a604d966931a8ad2b13b, type: 3}
+      propertyPath: maxPaternNum
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 3495755792787229024, guid: 0651f8828d10a604d966931a8ad2b13b, type: 3}
+      propertyPath: TESTpaternNum
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 4206441059943096128, guid: 0651f8828d10a604d966931a8ad2b13b, type: 3}
       propertyPath: m_IsTrigger
       value: 1
@@ -1255,11 +1267,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7385902028883353682, guid: 0651f8828d10a604d966931a8ad2b13b, type: 3}
       propertyPath: m_Size.x
-      value: 1.5072412
+      value: 2.916244
       objectReference: {fileID: 0}
     - target: {fileID: 7385902028883353682, guid: 0651f8828d10a604d966931a8ad2b13b, type: 3}
       propertyPath: m_Offset.x
-      value: 1.2536206
+      value: 1.958122
       objectReference: {fileID: 0}
     - target: {fileID: 7385902028883353682, guid: 0651f8828d10a604d966931a8ad2b13b, type: 3}
       propertyPath: m_Offset.y
@@ -2367,6 +2379,14 @@ PrefabInstance:
     - target: {fileID: 319729751127303397, guid: c0932c77a4bc2f2418f4359634e2f563, type: 3}
       propertyPath: slowMoveSpeed
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 369700086700690792, guid: c0932c77a4bc2f2418f4359634e2f563, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5973337943141158413, guid: c0932c77a4bc2f2418f4359634e2f563, type: 3}
+      propertyPath: m_GravityScale
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 6770966057145141651, guid: c0932c77a4bc2f2418f4359634e2f563, type: 3}
       propertyPath: m_LocalPosition.x

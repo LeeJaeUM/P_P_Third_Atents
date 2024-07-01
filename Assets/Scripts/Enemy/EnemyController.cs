@@ -128,14 +128,14 @@ public class EnemyController : CharacterBase
     // 공격 관련 ----------------------++++++++$$$$$$$$$$$+++++=-----------------------------------------------------
 
     [Header("Attack")]
-    public int maxPaternNum = 1;
+    public int maxPaternNum = 2;
     public int curPaternNum = 0;
 
     [SerializeField] protected int currentAttack = 0;         // 현재 공격 단계
     /// <summary>
     /// 마지막 공격 이후 경과 시간
     /// </summary>
-    protected float timeSinceAttack = 0.0f;
+    [SerializeField] protected float timeSinceAttack = 0.0f;
     /// <summary>
     /// 공격 대기 시간
     /// </summary>
@@ -148,7 +148,7 @@ public class EnemyController : CharacterBase
     /// <summary>
     /// 공격가능거리 플레이어와의 거리가 이보다 크면 공격벗어나게 되어있음
     /// </summary>
-    protected float attackDistance = 4.0f;                     // 공격 가능 거리
+    [SerializeField] protected float attackDistance = 4.0f;                     // 공격 가능 거리
 
     protected float attackMaintenanceTime = 0.5f;
 
@@ -170,7 +170,7 @@ public class EnemyController : CharacterBase
     [SerializeField] private float curAnimSpeedMultiplier = 0.5f;      // 현재 애니메이션이 느려질 속도, 기본설정이며 AnimationMAnager에서 설정함
     public Action onRedAttack;  // 붉은 공격 이펙트 발생용 액션
 
-    public Action onStun;
+    public Action onStunned;
     private float stunTime = 2.5f;
     private float curStunTimer = 0;
 
@@ -269,19 +269,8 @@ public class EnemyController : CharacterBase
             State = BehaviorState.Chase;
         };
 
+        //첫 스폰 시 Dead에서 Patrol로 변경
         RefreshPatrol();
-
-
-        //AttackSensor attackSensor = child.GetComponent<AttackSensor>();
-        //attackSensor.onSensorTriggered += (target) =>
-        //{
-        //    if (attackTarget == null)    // Attack 상태에서 한번만 실행됨
-        //    {
-        //        attackTarget = target.GetComponent<Player>();
-        //        attackTarget.onDie += ReturnWander;
-        //        State = BehaviorState.Attack;
-        //    }
-        //};
     }
 
 
@@ -463,8 +452,10 @@ public class EnemyController : CharacterBase
                 onUpdate = Update_Attack;
                 break;
             case BehaviorState.Stun:
+                Debug.Log("보스가 스턴걸림");
+                StopAllCoroutines();
                 animator.SetTrigger(Stun_Hash);
-                onStun?.Invoke();
+                onStunned?.Invoke();
                 onUpdate = Update_Stun;
                 break;
             case BehaviorState.Dead:
@@ -730,7 +721,7 @@ public class EnemyController : CharacterBase
     /// <summary>
     /// 
     /// </summary>
-    public override void EnterStunnedState()
+    public override void ParriedCheck()
     {
         State = BehaviorState.Stun;
     }

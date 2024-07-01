@@ -97,7 +97,7 @@ public class CharacterBase : MonoBehaviour, ICombat.IDamage, ICombat.IHealth, IC
     /// <summary>
     /// 특수공격이 패리되었을 때 enemy쪽에서 사용될 함수
     /// </summary>
-    public virtual void EnterStunnedState()
+    public virtual void ParriedCheck()
     {
     }
 }

@@ -15,7 +15,7 @@ public class ICombat
     {
         Enums.ParryState ParryState { get; }
 
-        void EnterStunnedState();
+        void ParriedCheck();
     }
 
     public interface IHealth

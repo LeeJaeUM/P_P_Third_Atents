@@ -15,6 +15,7 @@ public class PlayerSenesor_Attack : MonoBehaviour
     private float offTime = 2;
 
     public Action<ICombat.IDamage> onAttack;
+    public Action<ICombat.IParryState> onParriedCheck;
 
     private void Awake()
     {
@@ -61,7 +62,7 @@ public class PlayerSenesor_Attack : MonoBehaviour
         if(enemyParryState != null)
         {
             //enemy의 parrystate인터페이스의 함수 실행
-            enemyParryState.EnterStunnedState();
+            onParriedCheck?.Invoke(enemyParryState);
         }
     }
 

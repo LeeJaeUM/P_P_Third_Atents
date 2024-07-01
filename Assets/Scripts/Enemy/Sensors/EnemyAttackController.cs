@@ -36,6 +36,15 @@ public class EnemyAttackController : EnemySensorBase
             StartCoroutine(ColliderOnOff_Continue(maintenanceTime));
         };
 
+        enemy.onStunned += () =>
+        {
+            //모든 공격 콜라이더 비활성화
+            foreach (var attack in attackColliders)
+            {
+                attack.enabled = false;
+            }
+        };
+
         enemy.onPaternChange += PaternChange;
 
         rangeCollider.enabled = true;
