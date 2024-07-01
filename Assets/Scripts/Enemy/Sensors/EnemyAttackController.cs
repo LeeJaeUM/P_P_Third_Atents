@@ -33,10 +33,7 @@ public class EnemyAttackController : EnemySensorBase
             StartCoroutine(ColliderOnOff_Moment());
         };
 
-        enemy.onAttack_Continue += (maintenanceTime) =>
-        {
-            StartCoroutine(ColliderOnOff_Continue(maintenanceTime));
-        };
+        enemy.onAttack_Continue += ColliderOnOff_ContinueFunc;
 
         enemy.onPaternChange += PaternChange;
 
@@ -65,6 +62,8 @@ public class EnemyAttackController : EnemySensorBase
     {
         curPatern = atkIndex;
         rangeCollider = attackColliders[atkIndex];
+        offsetX = Mathf.Abs( rangeCollider.offset.x);
+        offsetY = Mathf.Abs( rangeCollider.offset.y);
     }
 
 
@@ -143,12 +142,17 @@ public class EnemyAttackController : EnemySensorBase
         tempColldier2D.enabled = false;
     }
 
-    /// <summary>
-    /// 지속 시간 동안 계속 공격콜라이더를 활성화 시켜둠
-    /// </summary>
-    /// <param name="maintenanceTime"></param>
-    /// <returns></returns>
-    IEnumerator ColliderOnOff_Continue(float maintenanceTime)
+    private void ColliderOnOff_ContinueFunc(float maintenanceTime)
+    {
+        StartCoroutine(ColliderOnOff_Continue(maintenanceTime));
+    }
+
+   /// <summary>
+   /// 지속 시간 동안 계속 공격콜라이더를 활성화 시켜둠
+   /// </summary>
+   /// <param name="maintenanceTime"></param>
+   /// <returns></returns>
+   IEnumerator ColliderOnOff_Continue(float maintenanceTime)
     {
         // 공격이 종료되기 전에 패턴이 바뀔 가능성 배제
         BoxCollider2D tempColldier2D = rangeCollider;

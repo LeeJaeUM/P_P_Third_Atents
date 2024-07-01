@@ -55,7 +55,7 @@ public class CharacterBase : MonoBehaviour, ICombat.IDamage, ICombat.IHealth
     }
 
     // 피해 받기 함수
-    public virtual void TakeDamage(float damage, float xPos)
+    public virtual void TakeDamage(float damage, float xPos, bool canParryAttack = true)
     {
         // 피해 로직 구현
         CurrentHealth -= damage;

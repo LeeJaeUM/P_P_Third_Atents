@@ -7,7 +7,7 @@ public class ICombat
 
     public interface IDamage
     {
-        void TakeDamage(float damage, float xPos);
+        void TakeDamage(float damage, float xPos, bool canParryAttack = true);
         Enums.ParryState ParryState { get; }
         void ParriedCheck();
     }

@@ -79,6 +79,8 @@ public class PlayerController : CharacterBase
 
     [Header("Block")]
     [SerializeField] private float blockMultiplier = 0.5f;
+
+
     public bool isParryAble = false;
     public bool isBlockAble = false;
     public float parryTime_origin = 2.0f;
@@ -321,7 +323,7 @@ public class PlayerController : CharacterBase
     // 점프 이벤트 처리
     private void OnJump()
     {
-        if (grounded)
+        if (grounded && !isRolling)
         {
             //점프 시 공격 인덱스 초기화
             currentAttack = 0;
@@ -422,7 +424,7 @@ public class PlayerController : CharacterBase
             case Enums.ActiveState.Active:
                 break;
             case Enums.ActiveState.Roll:
-                rigid.velocity = new Vector2(facingDirection * rollForce, rigid.velocity.y);
+                rigid.velocity = new Vector2(facingDirection * rollForce, 0);
                 break;
             case Enums.ActiveState.DashAttack:
                 rigid.velocity = new Vector2(facingDirection * rollForce * 0.6f, 0);
@@ -500,35 +502,10 @@ public class PlayerController : CharacterBase
     /// 데미지를 입는 순간에 블록 or 패리 or 피격인지 판단
     /// </summary>
     /// <param name="damage"></param>
-    public override void TakeDamage(float damage, float xPos)
+    public override void TakeDamage(float damage, float xPos, bool canParryAttack = true)
     {
-        // isParryAble가 false면 함수는 실행 안함
-        if (isParryAble && HitPosCheck(facingDirection, xPos))
-        {
-            onParry?.Invoke();
-            animator.SetTrigger(Parry_Hash);
-            ParryTimerReset();
-
-            // 패링 시 느려짐 효과 테스트
-            //StartCoroutine(TimeSlow());
-
-            //마나 회복
-            CurMana += upMana;
-
-            StartCoroutine(TakeDamageActive());
-            Debug.Log("패리성공");
-        }
-        else if (isBlockAble && HitPosCheck(facingDirection, xPos))
-        {
-            CurrentHealth -= (damage * blockMultiplier);
-
-            animator.SetTrigger(Block_Hash);
-            BlockComplete();
-
-            StartCoroutine(TakeDamageActive());
-            Debug.Log("가드로 막음");
-        }
-        else
+        //특수 패리만 가능할 경우
+        if (!canParryAttack)
         {
             CurrentHealth -= damage;
 
@@ -538,6 +515,46 @@ public class PlayerController : CharacterBase
             StartCoroutine(TakeDamageActive());
             Debug.Log("그냥 맞아버림");
         }
+        else
+        {
+            // isParryAble가 false면 함수는 실행 안함
+            if (isParryAble && HitPosCheck(facingDirection, xPos))
+            {
+                onParry?.Invoke();
+                animator.SetTrigger(Parry_Hash);
+                ParryTimerReset();
+
+                // 패링 시 느려짐 효과 테스트
+                //StartCoroutine(TimeSlow());
+
+                //마나 회복
+                CurMana += upMana;
+
+                StartCoroutine(TakeDamageActive());
+                Debug.Log("패리성공");
+            }
+            else if (isBlockAble && HitPosCheck(facingDirection, xPos))
+            {
+                CurrentHealth -= (damage * blockMultiplier);
+
+                animator.SetTrigger(Block_Hash);
+                BlockComplete();
+
+                StartCoroutine(TakeDamageActive());
+                Debug.Log("가드로 막음");
+            }
+            else
+            {
+                CurrentHealth -= damage;
+
+                animator.SetTrigger(Hurt_Hash);
+                ParryTimerReset();
+
+                StartCoroutine(TakeDamageActive());
+                Debug.Log("그냥 맞아버림");
+            }
+        }
+        
     }
 
     /// <summary>

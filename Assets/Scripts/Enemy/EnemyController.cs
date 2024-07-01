@@ -144,7 +144,7 @@ public class EnemyController : CharacterBase
     /// <summary>
     ///  공격 시 앞으로 나갈 거리
     /// </summary>
-    [SerializeField] protected float attackForce = 2.0f;     
+    [SerializeField] protected float attackMoveSpeed = 2.5f;     
     /// <summary>
     /// 공격가능거리 플레이어와의 거리가 이보다 크면 공격벗어나게 되어있음
     /// </summary>
@@ -160,12 +160,12 @@ public class EnemyController : CharacterBase
     /// <summary>
     ///  // 공격중인지 판단하는 변수
     /// </summary>
-    [SerializeField] protected bool isAttacking = false;     
+    [SerializeField] protected bool isTurnable = false;     
     /// <summary>
     /// 공격중에 회전을 막을 시간
     /// </summary>
-    [SerializeField] protected float curTimeAttackElaped = 1f;      
-    [SerializeField] protected float defaultTimeAttackElaped = 1f;      // 기본 회전방지 시간
+    [SerializeField] protected float curAttackMoveTime = 1f;      
+    [SerializeField] protected float defaultAttackMoveTime = 1f;      // 기본 회전방지 시간
 
     [SerializeField] private float curAnimSpeedMultiplier = 0.5f;      // 현재 애니메이션이 느려질 속도, 기본설정이며 AnimationMAnager에서 설정함
     public Action onRedAttack;  // 붉은 공격 이펙트 발생용 액션
@@ -205,6 +205,9 @@ public class EnemyController : CharacterBase
     /// EnemyAttackController로 보낼 공격패턴 번호
     /// </summary>
     public Action<int> onPaternChange;
+
+    [SerializeField]
+    protected float turnLockDuration = 0.15f; //회전 방지 시간
 
     // 탐색 관련 -------------------------------------------------------------------------------------------
     [Header("Find")]
@@ -342,7 +345,7 @@ public class EnemyController : CharacterBase
             lastSeenPosition = position; // 플레이어의 마지막 위치 저장
         }
 
-        MoveTowards(lastSeenPosition); // 마지막 위치로 이동
+        MoveTowards(lastSeenPosition, curRunSpeed); // 마지막 위치로 이동
 
         // 현재 위치의 x가 lastSeenPosition의 x에 거의 도달했는지 확인
         if (Mathf.Abs(transform.position.x - player.transform.position.x) < attackDistance)
@@ -377,13 +380,13 @@ public class EnemyController : CharacterBase
         timeSinceAttack += Time.deltaTime;
 
         //공격중엔 회전 안함
-        if (!isAttacking)
+        if (isTurnable)
         {
             SetFacingDirection();
         }
 
         // 플레이어와의 x축 거리 계산 후 공격거리보다 크고 공격중이 아니면 chase로 변경
-        if (!isPaternOn && !isAttacking && Mathf.Abs(transform.position.x - player.transform.position.x) > attackDistance)
+        if (!isPaternOn && !isTurnable && Mathf.Abs(transform.position.x - player.transform.position.x) > attackDistance)
         {
             //다음 공격이 가능한 시점부터 추적가능
             if (timeSinceAttack > curAttackDelay)
@@ -397,7 +400,6 @@ public class EnemyController : CharacterBase
             // 공격 로직
             if (timeSinceAttack > curAttackDelay)
             {
-                Debug.Log("여긴가?");
                 //공격 대기 시간 초기화
                 timeSinceAttack = 0.0f;
                 //패턴 시작 알림
@@ -550,12 +552,12 @@ public class EnemyController : CharacterBase
     /// 위치로 이동하는 함수
     /// </summary>
     /// <param name="targetPosition">이동할 위치</param>
-    protected void MoveTowards(Vector3 targetPosition)
+    protected void MoveTowards(Vector3 targetPosition, float moveSpeed)
     {
         targetPosition = new Vector3(targetPosition.x, 0, 0);
         Vector3 myPosition = new Vector3(transform.position.x, 0, 0);
         Vector2 direction = (targetPosition - myPosition).normalized;
-        rigid.velocity = direction * curRunSpeed;
+        rigid.velocity = direction * moveSpeed;
     }
 
     /// <summary>
@@ -579,7 +581,7 @@ public class EnemyController : CharacterBase
         {
             //딜레이는 늘어나고 속도는 줄어들게 함
             curAttackDelay *= curAnimSpeedMultiplier;
-            curTimeAttackElaped *= curAnimSpeedMultiplier;
+            curAttackMoveTime *= curAnimSpeedMultiplier;
 
             curWalkSpeed *= animationManager.SpeedMultiplier;
             curRunSpeed *= animationManager.SpeedMultiplier;
@@ -587,7 +589,7 @@ public class EnemyController : CharacterBase
         else
         {
             curAttackDelay = defaultAttackDelay;
-            curTimeAttackElaped = defaultTimeAttackElaped;
+            curAttackMoveTime = defaultAttackMoveTime;
 
             curWalkSpeed = defaultWalkSpeed;
             curRunSpeed = defaultRunSpeed;
@@ -636,14 +638,6 @@ public class EnemyController : CharacterBase
     }
 
     /// <summary>
-    /// 공격 콜라이더에 플레이어 충돌 시 데미지를 넘길 함수 액션에 등록 - enemyAttackController에서 알림
-    /// </summary>
-    protected virtual void AttackActionRegistering()
-    {
-        enemyAttackController.onAttack0 += Attack0_Damage;
-        enemyAttackController.onAttack1 += Attakc1_Damage;
-    }
-    /// <summary>
     /// 공격 애니메이션을 실행하는 함수
     /// </summary>
     protected virtual void AttackAnimationStart()
@@ -685,16 +679,42 @@ public class EnemyController : CharacterBase
     /// <returns></returns>
     protected virtual IEnumerator Attacking_Physics()
     {
-        rigid.velocity = Vector3.zero;
-        isAttacking = true;
-        float temp = 0;
-        while(temp < curTimeAttackElaped)
+        isTurnable = false;
+        rigid.velocity = Vector2.zero;
+        yield return new WaitForSeconds(turnLockDuration);
+        float temp = 0; 
+        while (temp < curAttackMoveTime)
         {
             temp += Time.deltaTime;
-            rigid.velocity = new Vector2(attackForce * facingDirection, rigid.velocity.y);
+            rigid.velocity = new Vector2(attackMoveSpeed * facingDirection, rigid.velocity.y);
             yield return null;
         }
-        isAttacking = false;
+        rigid.velocity = Vector2.zero;
+        isTurnable = true;
+    }
+
+    /// <summary>
+    /// 공격 중 이동 함수 - 애니메이션 이벤트 사용
+    /// </summary>
+    private void AttackPhysicsFunc()
+    {
+        StartCoroutine(Attacking_Physics());
+    }
+
+
+    protected virtual IEnumerator Attacking_TurnLock()
+    {
+        isTurnable = false;
+        yield return new WaitForSeconds(turnLockDuration);
+        isTurnable = true;
+    }
+
+    /// <summary>
+    /// 회전방지 함수 - 애니메이션 이벤트 사용
+    /// </summary>
+    private void AttackTurnLockFunc()
+    {
+        StartCoroutine(Attacking_TurnLock());
     }
 
     private void RedEffect()
@@ -718,6 +738,15 @@ public class EnemyController : CharacterBase
 
 
     #region 공격패턴마다 정해진 데미지 주는 함수 EnemyAttackController에서 실행됨
+
+    /// <summary>
+    /// 공격 콜라이더에 플레이어 충돌 시 데미지를 넘길 함수 액션에 등록 - enemyAttackController에서 알림
+    /// </summary>
+    protected virtual void AttackActionRegistering()
+    {
+        enemyAttackController.onAttack0 += Attack0_Damage;
+        enemyAttackController.onAttack1 += Attakc1_Damage;
+    }
 
     protected override void Attack0_Damage(ICombat.IDamage target)
     {

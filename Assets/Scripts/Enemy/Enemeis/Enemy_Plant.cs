@@ -13,7 +13,7 @@ public class Enemy_Plant : EnemyController
     {
         base.Awake();
 
-        curTimeAttackElaped = 1.6f;
+        curAttackMoveTime = 1.6f;
         curAttackDelay = 2.0f;
 
         attackSpriteRenderer = transform.GetChild(3).GetComponent<SpriteRenderer>();
@@ -22,10 +22,10 @@ public class Enemy_Plant : EnemyController
     protected override IEnumerator Attacking_Physics()
     {
         attackSpriteRenderer.enabled = true;
-        isAttacking = true;
-        rigid.velocity = new Vector2(attackForce * FacingDirection, rigid.velocity.y);
-        yield return new WaitForSeconds(curTimeAttackElaped);
-        isAttacking = false;
+        isTurnable = true;
+        rigid.velocity = new Vector2(attackMoveSpeed * FacingDirection, rigid.velocity.y);
+        yield return new WaitForSeconds(curAttackMoveTime);
+        isTurnable = false;
     }
 
     protected override void DoAttack_Collider_Moment()

@@ -11,8 +11,6 @@ public class Enemy_Boss : EnemyController
     private float dashAttackForce = 8.0f;
     private float defaultAttackForce = 2.0f;
 
-    [SerializeField]
-    private float turnLockDuration = 0.15f;
 
     protected override void Start()
     {
@@ -20,6 +18,7 @@ public class Enemy_Boss : EnemyController
         animator = GetComponent<Animator>();
         spriteRenderer = GetComponent<SpriteRenderer>();
         chaseDis = 20.0f;
+        curRunSpeed = 2;
     }
 
     protected override void Update()
@@ -44,34 +43,8 @@ public class Enemy_Boss : EnemyController
         }
 
 
-        MoveTowards(lastSeenPosition); // 마지막 위치로 이동
+        MoveTowards(lastSeenPosition, curRunSpeed); // 마지막 위치로 이동
     }
-
-    protected override IEnumerator Attacking_Physics()
-    {
-        //이떄부터 회전 불가
-        isAttacking = true;
-        float temp = 0;
-        // 즉시 공격하지말고 0.1초 대기 후 공격
-        yield return new WaitForSeconds(turnLockDuration);
-
-        //회전 금지 시간 동안 이동 
-        while (temp < curTimeAttackElaped)
-        {
-            temp += Time.deltaTime;
-            rigid.velocity = new Vector2(attackForce * FacingDirection, rigid.velocity.y);
-            yield return null;
-        }
-        // 즉시 종료하지말고 0.1초 대기
-        yield return new WaitForSeconds(turnLockDuration);
-        rigid.velocity = Vector2.zero;
-        isAttacking = false;
-    }
-    private void AttackPhysicsFunc()
-    {
-        StartCoroutine(Attacking_Physics());
-    }
-
 
     #region AttackPaternFunc
 
@@ -103,22 +76,22 @@ public class Enemy_Boss : EnemyController
     private void Set_DashAttack()
     {
         parryState = Enums.ParryState.DashAttack;
-        AttackStartSetting(3, 0.3f, 10);
+        AttackStartSetting(3, 0.5f, 12);
 
         rigid.velocity = Vector3.zero;
     }
 
     /// <summary>
-    /// 공격 시작 시 변수값 설정할 함수 / 공격 대기시간, 공격 중 회전 방지 시간, 공격 시 앞으로 나아갈 힘
+    /// 공격 시작 시 변수값 설정할 함수 / 공격 대기시간, 이동공격의 이동 시간, 공격 시 앞으로 나아갈 속도
     /// </summary>
     /// <param name="delay">공격 대기시간</param>
-    /// <param name="elapedTime">공격 중 회전 방지 시간</param>
-    /// <param name="force">공격 시 앞으로 나아갈 힘</param>
+    /// <param name="elapedTime">이동공격의 이동 시간</param>
+    /// <param name="force">공격 시 앞으로 나아갈 속도</param>
     private void AttackStartSetting(float delay, float elapedTime, float force = 1.0f)
     {
         curAttackDelay = delay;
-        curTimeAttackElaped = elapedTime;
-        attackForce = force;
+        curAttackMoveTime = elapedTime;
+        attackMoveSpeed = force;
     }
 
     /// <summary>
@@ -127,8 +100,8 @@ public class Enemy_Boss : EnemyController
     private void AttackEndRefresh()
     {
         curAttackDelay = defaultAttackDelay;
-        curTimeAttackElaped = defaultTimeAttackElaped;
-        attackForce = defaultAttackForce;
+        curAttackMoveTime = defaultAttackMoveTime;
+        attackMoveSpeed = defaultAttackForce;
 
         //parryState = Enums.ParryState.None;
     }
@@ -159,7 +132,7 @@ public class Enemy_Boss : EnemyController
     /// <param name="target"></param>
     protected override void Attakc2_Damage(ICombat.IDamage target)
     {
-        target.TakeDamage(attackPower * 4.0f, transform.position.x);
+        target.TakeDamage(attackPower * 4.0f, transform.position.x, false);
     }
 
     #endregion
