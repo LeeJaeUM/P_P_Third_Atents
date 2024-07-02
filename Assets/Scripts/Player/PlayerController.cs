@@ -10,22 +10,6 @@ using static UnityEngine.Rendering.DebugUI;
 [RequireComponent(typeof(PlayerInputHandler))]
 public class PlayerController : CharacterBase
 {
-    public override float CurrentHealth
-    {
-        get => currentHealth;
-        protected set
-        {
-            // 최소값은 0, 최대값은 maxHealth로 제한
-            currentHealth = Mathf.Clamp(value, 0, maxHealth);
-            onHpChange?.Invoke(currentHealth / maxHealth);
-            if (currentHealth <= 0)
-            {
-                Die(); // HP가 0이하면 사망
-            }
-        }
-    }
-    public Action<float> onHpChange;
-
     private float maxMana = 10;
     private float curMana = 0;
     public float CurMana
@@ -374,7 +358,7 @@ public class PlayerController : CharacterBase
         groundSensor = transform.GetChild(0).GetComponent<PlayerSensor_Ground>();
         animationManager = GameManager.Instance.AnimationManager;
 
-        sensor_Attack.onAttack += Attack0_Damage;
+        sensor_Attack.onAttackEnemy += Attack0_Damage;
     }
 
     //패리 판정을 적이 판단하도록 변경

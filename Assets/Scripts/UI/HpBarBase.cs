@@ -4,15 +4,15 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class HpMpBar : MonoBehaviour
+public class HpBarBase : MonoBehaviour
 {
     Slider yellowSlider;
     Slider redSlider;
-    Slider mpSlider;
 
     private float downDuration = 0.65f;
 
-    private void Awake()
+    CharacterBase characterBase;
+    protected virtual void Awake()
     {
         Transform child = transform.GetChild(0);
         yellowSlider = child.GetComponent<Slider>();
@@ -20,24 +20,18 @@ public class HpMpBar : MonoBehaviour
         child = transform.GetChild(1);
         redSlider = child.GetComponent<Slider>();
 
-        child = transform.GetChild (2);
-        mpSlider = child.GetComponent<Slider>();
     }
 
-    private void Start()
+    protected virtual void Start()
     {
-        PlayerController player = GameManager.Instance.Player;
-        player.onHpChange += UpdateHpBar;
-        player.onMpChange += UpdateMpBar;
+        //액션 등록
+        characterBase = GetComponentInParent<CharacterBase>();
+        characterBase.onHpChange += UpdateHpBar;
     }
 
-    private void UpdateMpBar(float percent)
+    protected void UpdateHpBar(float percent)
     {
-        mpSlider.value = percent;
-    }
-
-    private void UpdateHpBar(float percent)
-    {
+        Debug.Log("액션 발동 됨");
         StartCoroutine(HpBatUpdateCo(percent));
     }
 

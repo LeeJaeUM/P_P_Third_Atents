@@ -19,7 +19,7 @@ public class EnemyController : CharacterBase
         {
             // 최소값은 0, 최대값은 maxHealth로 제한
             currentHealth = Mathf.Clamp(value, 0, maxHealth);
-
+            onHpChange?.Invoke(currentHealth / maxHealth);
             if (currentHealth <= 0)
             { 
                 State = BehaviorState.Dead; // HP가 0이하면 사망
@@ -279,6 +279,7 @@ public class EnemyController : CharacterBase
 
     protected virtual void Start()
     {
+        CurrentHealth = maxHealth;
         State = BehaviorState.Patrol;
 
         player = GameManager.Instance.Player;
@@ -769,7 +770,6 @@ public class EnemyController : CharacterBase
     }
 
     #endregion
-
 
     private void TestPatern()
     {

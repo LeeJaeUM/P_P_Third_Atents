@@ -14,7 +14,7 @@ public class PlayerSenesor_Attack : MonoBehaviour
     private float curOnTime = 0;
     private float offTime = 2;
 
-    public Action<ICombat.IDamage> onAttack;
+    public Action<ICombat.IDamage> onAttackEnemy;
 
     private void Awake()
     {
@@ -54,7 +54,7 @@ public class PlayerSenesor_Attack : MonoBehaviour
         // IDamage 인터페이스가 구현되어 있는지 확인합니다.
         if (damageable != null)
         {
-            onAttack?.Invoke(damageable);
+            onAttackEnemy?.Invoke(damageable);
         }
 
     }

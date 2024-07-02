@@ -15,7 +15,7 @@ public class CharacterBase : MonoBehaviour, ICombat.IDamage, ICombat.IHealth
         {
             // 최소값은 0, 최대값은 maxHealth로 제한
             currentHealth = Mathf.Clamp(value, 0, maxHealth);
-
+            onHpChange?.Invoke(currentHealth / maxHealth);
             if (currentHealth <= 0)
             {
                 Die(); // HP가 0이하면 사망
@@ -23,6 +23,7 @@ public class CharacterBase : MonoBehaviour, ICombat.IDamage, ICombat.IHealth
         }
     }
     public int MaxHealth => maxHealth;
+    public Action<float> onHpChange;
 
     /// <summary>
     /// 특수 패리 가능 상태
