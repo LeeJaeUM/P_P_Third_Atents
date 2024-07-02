@@ -776,6 +776,11 @@ public class EnemyController : CharacterBase
         AttackPattern = (Enums.AttackPatern)TESTpaternNum;
     }
 
+    public override void Die()
+    {
+        base.Die();
+        animator.SetTrigger(Death_Hash);
+    }
 
     // 미구현-----------------------------------------------------------------------------
     // ---------------------미구현--------------------------------------------------------

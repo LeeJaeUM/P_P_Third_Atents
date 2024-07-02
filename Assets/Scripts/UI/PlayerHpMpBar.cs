@@ -10,9 +10,13 @@ public class PlayerHpMpBar : HpBarBase
 
     protected override void Awake()
     {
-        base.Awake(); 
-        
-        Transform child = transform.GetChild(2);
+        Transform child = transform.GetChild(1);
+        yellowSlider = child.GetComponent<Slider>();
+
+        child = transform.GetChild(2);
+        redSlider = child.GetComponent<Slider>();
+
+        child = transform.GetChild(3);
         mpSlider = child.GetComponent<Slider>();
     }
 

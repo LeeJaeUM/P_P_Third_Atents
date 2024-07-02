@@ -297,7 +297,7 @@ Rigidbody2D:
   m_Mass: 1
   m_LinearDrag: 0.5
   m_AngularDrag: 0.05
-  m_GravityScale: 1
+  m_GravityScale: 2
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
@@ -366,18 +366,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 454dbb5cb4b666f47bcdd6812303590d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxHealth: 1000
+  maxHealth: 200
   currentHealth: 0
+  parryState: 0
   attackPower: 10
   moveSpeed: 4
-  slowMoveSpeed: 0.5
+  slowMoveSpeed: 0
   curMoveSpeed: 4
-  jumpForce: 8
+  jumpForce: 14
   rollForce: 12
   grounded: 0
   isRolling: 0
   currentAttack: 0
   rollDelay: 1
+  dodgeLayerName: Dodge
+  playerLayerName: Player
   blockMultiplier: 0.5
   isParryAble: 0
   isBlockAble: 0

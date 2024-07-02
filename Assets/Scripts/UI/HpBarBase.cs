@@ -6,10 +6,10 @@ using UnityEngine.UI;
 
 public class HpBarBase : MonoBehaviour
 {
-    Slider yellowSlider;
-    Slider redSlider;
+    protected Slider yellowSlider;
+    protected Slider redSlider;
 
-    private float downDuration = 0.65f;
+    private float downDuration = 0.35f;
 
     CharacterBase characterBase;
     protected virtual void Awake()
