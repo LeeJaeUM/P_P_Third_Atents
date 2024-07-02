@@ -15,6 +15,17 @@ public class GameManager : Singleton<GameManager>
         }
     }
 
+    PlayerInputHandler inputHandler;
+    public PlayerInputHandler PlayerInputHandler
+    {
+        get
+        {
+            if(inputHandler == null)
+                inputHandler = FindAnyObjectByType<PlayerInputHandler>();
+            return inputHandler;
+        }
+    }
+
 
     AnimationManager animationManager;
     public AnimationManager AnimationManager
@@ -24,6 +35,17 @@ public class GameManager : Singleton<GameManager>
             if(animationManager == null)
                 animationManager = FindAnyObjectByType<AnimationManager>();
             return animationManager;
+        }
+    }
+
+    UIInputHandler uiInputHandler;
+    public UIInputHandler UIInputHandler
+    {
+        get
+        {
+            if(uiInputHandler == null)
+                uiInputHandler = FindAnyObjectByType<UIInputHandler>();
+            return uiInputHandler;
         }
     }
 }

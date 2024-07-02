@@ -1294,11 +1294,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3346916394126173084, guid: 0651f8828d10a604d966931a8ad2b13b, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3346916394126173084, guid: 0651f8828d10a604d966931a8ad2b13b, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6582176495428872785, guid: 0651f8828d10a604d966931a8ad2b13b, type: 3}
       propertyPath: m_LocalPosition.x
@@ -1344,17 +1344,21 @@ PrefabInstance:
       propertyPath: m_Name
       value: Boss_Golem Phase 1
       objectReference: {fileID: 0}
+    - target: {fileID: 6689650386261942226, guid: 0651f8828d10a604d966931a8ad2b13b, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7053538902141763438, guid: 0651f8828d10a604d966931a8ad2b13b, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7496344895437985849, guid: 0651f8828d10a604d966931a8ad2b13b, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7496344895437985849, guid: 0651f8828d10a604d966931a8ad2b13b, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

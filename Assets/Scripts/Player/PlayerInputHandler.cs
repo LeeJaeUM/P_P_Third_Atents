@@ -5,6 +5,7 @@ public class PlayerInputHandler : MonoBehaviour
 {
     public Vector2 InputDirection { get; private set; }
 
+    //----------PlayerInput----------
     public event System.Action OnMove;
     public event System.Action OnJumpPressed;
     public event System.Action OnAttackPressed;
@@ -13,7 +14,17 @@ public class PlayerInputHandler : MonoBehaviour
     public event System.Action OnBlockReleased;
     public event System.Action OnSkillPressed;
 
+    //---------------UI-----------
+    public event System.Action OnWASDPressed;
+    public event System.Action<bool> OnESCMenuPressed;
+    public event System.Action OnInteractPressed;
+    public event System.Action OnNewSkillPressed;
+
     private PlayerInputActions inputActions;
+
+    private bool isOpen = false;
+
+    #region UnituEvent
 
     private void Awake()
     {
@@ -21,6 +32,20 @@ public class PlayerInputHandler : MonoBehaviour
     }
 
     private void OnEnable()
+    {
+        PlayerInputEnable();
+        UIInputEnable();
+    }
+
+    private void OnDisable()
+    {
+        PlayerInputDisable();
+        UIInputDisable();
+    }
+
+    #endregion
+
+    private void PlayerInputEnable()
     {
         inputActions.Player.Enable();
         inputActions.Player.Move.performed += OnMovePerCan;
@@ -33,7 +58,7 @@ public class PlayerInputHandler : MonoBehaviour
         inputActions.Player.Skill.performed += context => OnSkillPressed?.Invoke();
     }
 
-    private void OnDisable()
+    private void PlayerInputDisable()
     {
         inputActions.Player.Skill.performed -= context => OnSkillPressed?.Invoke();
         inputActions.Player.Block.canceled -= context => OnBlockReleased?.Invoke();
@@ -50,5 +75,31 @@ public class PlayerInputHandler : MonoBehaviour
     {
         InputDirection = context.ReadValue<Vector2>();
         OnMove?.Invoke();
+    }
+
+    private void UIInputEnable()
+    {
+        inputActions.UI.Enable();
+        inputActions.UI.WASD.performed += OnWASDPerformed;
+        inputActions.UI.ESCMenu.performed += (context) => 
+        {
+            isOpen = !isOpen;
+            OnESCMenuPressed?.Invoke(isOpen);
+        };
+        inputActions.UI.Interact.performed += context => OnInteractPressed?.Invoke();
+        inputActions.UI.Skill.performed += context => OnNewSkillPressed?.Invoke();
+    }
+    private void UIInputDisable()
+    {
+        inputActions.UI.Skill.performed -= context => OnNewSkillPressed?.Invoke();
+        inputActions.UI.Interact.performed -= context => OnInteractPressed?.Invoke();
+        inputActions.UI.ESCMenu.performed -= context => OnESCMenuPressed?.Invoke(isOpen);
+        inputActions.UI.WASD.performed -= OnWASDPerformed;
+        inputActions.UI.Disable();
+    }
+    private void OnWASDPerformed(InputAction.CallbackContext context)
+    {
+        InputDirection = context.ReadValue<Vector2>();
+        OnWASDPressed?.Invoke();
     }
 }

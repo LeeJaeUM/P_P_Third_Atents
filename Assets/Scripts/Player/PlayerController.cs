@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem.LowLevel;
 using static EnemyController;
@@ -187,6 +188,20 @@ public class PlayerController : CharacterBase
 
     private void OnEnable()
     {
+        PlayerInputEnable();
+    }
+
+
+    private void OnDisable()
+    {
+        inputHandler.OnESCMenuPressed -= OnESC;
+        PlayerInputDisable();
+    }
+
+
+    #region InputActions
+    private void PlayerInputEnable()
+    {
         inputHandler.OnMove += OnMove;              // 이동 이벤트 등록
         inputHandler.OnJumpPressed += OnJump;        // 점프 이벤트 등록
         inputHandler.OnAttackPressed += OnAttack;    // 공격 이벤트 등록
@@ -196,8 +211,7 @@ public class PlayerController : CharacterBase
         inputHandler.OnSkillPressed += OnSkill;
     }
 
-
-    private void OnDisable()
+    private void PlayerInputDisable()
     {
         inputHandler.OnSkillPressed -= OnSkill;
         inputHandler.OnMove -= OnMove;              // 이동 이벤트 해제
@@ -207,9 +221,6 @@ public class PlayerController : CharacterBase
         inputHandler.OnBlockPressed -= OnBlockPerformed;  // 방패 들기 이벤트 해제
         inputHandler.OnBlockReleased -= OnBlockCanceled;  // 방패 내리기 이벤트 해제
     }
-
-    #region InputActions
-
     //스킬 사용
     private void OnSkill()
     {
@@ -353,6 +364,8 @@ public class PlayerController : CharacterBase
     // 시작 초기화
     void Start()
     {
+        inputHandler.OnESCMenuPressed += OnESC;
+
         animator = GetComponent<Animator>();
         rigid = GetComponent<Rigidbody2D>();
         groundSensor = transform.GetChild(0).GetComponent<PlayerSensor_Ground>();
@@ -361,15 +374,17 @@ public class PlayerController : CharacterBase
         sensor_Attack.onAttackEnemy += Attack0_Damage;
     }
 
-    //패리 판정을 적이 판단하도록 변경
-    //private void EnemyParry(IParryState state)
-    //{
-    //    //현재 적의 패리(가능)상태와 플레이어의 특수 패리상태를 비교하여 같으면 특수패리 성공
-    //    if(state.ParryState == parryState)
-    //    {
-    //        state.ParriedCheck();
-    //    }
-    //}
+    private void OnESC(bool isOpen)
+    {
+        if(isOpen)
+        {
+            PlayerInputDisable();
+        }
+        else
+        {
+            PlayerInputEnable();
+        }
+    }
 
     // 업데이트
     private void Update()
